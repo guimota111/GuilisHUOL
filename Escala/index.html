@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>GUILIS - Gestão de Escala Patologia</title>
+    <style>
+        :root {
+            --primary: #4a66b4;
+            --header-tabela: #c0dbd5;
+            --cor-cong: #7c8ee9;
+            --cor-micro: #81c784;
+            --cor-macro: #ffd54f;
+        }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: #f0f0f0; }
+        
+        #sidebar { 
+            width: 320px; background: #2c3e50; color: white; padding: 20px; 
+            height: 100vh; position: sticky; top: 0; overflow-y: auto; box-sizing: border-box;
+        }
+
+        #main-content { flex: 1; padding: 15px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        .semana-bloco { margin-bottom: 4px; border: 1.2px solid #000; page-break-inside: avoid; }
+        .semana-header { background-color: var(--primary) !important; color: white !important; padding: 2px 10px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #000; padding: 1px; text-align: center; font-size: 0.7rem; vertical-align: middle; position: relative; }
+        th { background-color: var(--header-tabela) !important; height: 18px; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold; }
+        .cargo-col { width: 90px; font-weight: bold; text-align: left; padding-left: 5px; background: #dfd8d8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        .cong-row { height: 25px; background-color: var(--cor-cong) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .micro-row { height: 50px; background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .macro-row { height: 50px; background-color: #fff9c4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        .celula-edit { min-height: 20px; cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; }
+        .badge-nome { background: rgba(0,0,0,0.15); padding: 2px 4px; border-radius: 3px; font-size: 0.65rem; border: 0.5px solid rgba(0,0,0,0.2); font-weight: 500; }
+        .cong-row .badge-nome { background: white; color: #000; font-weight: bold; }
+
+        /* DASHBOARD */
+        .stat-card { background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .stat-card strong { display: block; margin-bottom: 6px; font-size: 0.85rem; border-bottom: 1px solid #555; padding-bottom: 2px; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 4px; font-size: 0.7rem; }
+        .stat-label { width: 45px; }
+        .stat-bar-bg { flex: 1; height: 7px; background: #222; border-radius: 4px; overflow: hidden; margin: 0 8px; }
+        .stat-bar-fill { height: 100%; transition: width 0.3s; }
+        .stat-count { width: 15px; text-align: right; font-weight: bold; }
+
+        .fill-cong { background-color: var(--cor-cong); }
+        .fill-micro { background-color: var(--cor-micro); }
+        .fill-macro { background-color: var(--cor-macro); }
+
+        input, button { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: none; box-sizing: border-box; }
+        .btn-add { background: #27ae60; color: white; cursor: pointer; font-weight: bold; }
+        .btn-print { background: #e67e22; color: white; cursor: pointer; font-weight: bold; margin-top: 15px; font-size: 1rem; }
+        
+        #residente-menu { position: absolute; background: white; border: 1px solid #000; z-index: 100; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); width: 160px; border-radius: 4px; overflow: hidden; }
+        .menu-item { padding: 10px; color: black; text-align: left; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        .menu-item:hover { background: #f0f0f0; }
+
+        @media print {
+            #sidebar { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; }
+            @page { margin: 0.4cm; size: A4 portrait; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h3 style="margin-top:0">GUILIS - Escala</h3>
+    <label style="font-size: 0.8rem;">Mês de Referência:</label>
+    <input type="month" id="mes-selecionado" value="2026-02">
+    
+    <hr style="opacity:0.2">
+    <h4>Residentes</h4>
+    <div id="lista-cadastro"></div>
+    <input type="text" id="novo-residente" placeholder="Novo residente...">
+    <button class="btn-add" onclick="addResidente()">ADICIONAR</button>
+
+    <hr style="opacity:0.2">
+    <h4>Estatísticas de Justiça</h4>
+    <div id="stats-container"></div>
+
+    <button class="btn-print" onclick="window.print()">IMPRIMIR ESCALA</button>
+</div>
+
+<div id="main-content">
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 5px;">
+            <h2 style="margin: 0; font-size: 1.1rem; letter-spacing: 1px;">ESCALA DE RESIDENTES - HUOL</h2>
+            <span id="label-mes" style="font-weight: bold; text-transform: uppercase; font-size: 0.9rem; color: #444;"></span>
+        </div>
+        <div id="lista-semanas"></div>
+    </div>
+</div>
+
+<div id="residente-menu"></div>
+
+<script>
+    // Lista inicial conforme solicitado
+    const residentesPadrao = ["Luana", "Liana", "Lucas", "Henrique", "Renato", "David", "Rafael"];
+    
+    let residentes = JSON.parse(localStorage.getItem('guilis_residentes')) || residentesPadrao;
+    let escalaData = JSON.parse(localStorage.getItem('guilis_escala')) || {};
+    let celulaAtiva = null;
+
+    const inputData = document.getElementById('mes-selecionado');
+    const menu = document.getElementById('residente-menu');
+
+    function save() {
+        localStorage.setItem('guilis_residentes', JSON.stringify(residentes));
+        localStorage.setItem('guilis_escala', JSON.stringify(escalaData));
+    }
+
+    function init() {
+        renderResidentes();
+        gerarEscala();
+    }
+
+    function addResidente() {
+        const input = document.getElementById('novo-residente');
+        if(input.value) {
+            residentes.push(input.value);
+            input.value = '';
+            renderResidentes();
+            atualizarStats();
+            save();
+        }
+    }
+
+    function renderResidentes() {
+        const lista = document.getElementById('lista-cadastro');
+        lista.innerHTML = residentes.map((r, i) => `
+            <div style="display:flex; align-items:center; margin-bottom:6px; background:#34495e; padding:4px 8px; border-radius:4px;">
+                <span style="flex:1; font-size:0.9rem;">${r}</span>
+                <span onclick="removerResidente(${i})" style="cursor:pointer; color:#e74c3c; font-weight:bold; padding:0 5px;">×</span>
+            </div>
+        `).join('');
+    }
+
+    function removerResidente(i) {
+        if(confirm('Deseja remover este residente da lista?')) {
+            residentes.splice(i,1);
+            renderResidentes();
+            atualizarStats();
+            save();
+        }
+    }
+
+    function gerarEscala() {
+        const [ano, mes] = inputData.value.split('-').map(Number);
+        const ultimoDia = new Date(ano, mes, 0).getDate();
+        document.getElementById('label-mes').innerText = new Date(ano, mes-1).toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'});
+
+        const container = document.getElementById('lista-semanas');
+        container.innerHTML = '';
+        let diasUteis = [];
+        let contadorSemana = 1;
+
+        for (let d = 1; d <= ultimoDia; d++) {
+            const data = new Date(ano, mes-1, d);
+            if (data.getDay() >= 1 && data.getDay() <= 5) {
+                diasUteis.push({dia: d, label: data.toLocaleDateString('pt-BR', {weekday:'short'}).toUpperCase().replace('.','')});
+            }
+            if (data.getDay() === 5 || d === ultimoDia) {
+                if (diasUteis.length > 0) {
+                    container.appendChild(criarTabelaSemana(contadorSemana++, diasUteis, mes));
+                    diasUteis = [];
+                }
+            }
+        }
+
+        // Reconectar dados salvos
+        Object.keys(escalaData).forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.innerHTML = escalaData[id].map(n => `<span class="badge-nome">${n}</span>`).join('');
+            }
+        });
+        atualizarStats();
+    }
+
+    function criarTabelaSemana(num, dias, mes) {
+        const div = document.createElement('div');
+        div.className = 'semana-bloco';
+        const setores = [
+            {id: 'cong', label: 'Congelação', classe: 'cong-row'},
+            {id: 'micro', label: 'Microscopia', classe: 'micro-row'},
+            {id: 'macro', label: 'Macroscopia', classe: 'macro-row'}
+        ];
+
+        let html = `<div class="semana-header">Semana ${num}</div><table><thead><tr><th class="cargo-col">SETOR</th>`;
+        for(let i=0; i<5; i++) {
+            if(dias[i]) html += `<th>${dias[i].dia}/${mes < 10 ? '0'+mes : mes}<br>${dias[i].label}</th>`;
+            else html += `<th style="color:#ccc">-</th>`;
+        }
+        html += `</tr></thead><tbody>`;
+
+        setores.forEach(s => {
+            html += `<tr class="${s.classe}"><td class="cargo-col">${s.label}</td>`;
+            for(let i=0; i<5; i++) {
+                if(dias[i]) {
+                    const idCell = `${s.id}-${dias[i].dia}`;
+                    html += `<td onclick="abrirMenu(event, '${idCell}')"><div id="${idCell}" class="celula-edit"></div></td>`;
+                } else html += `<td style="background:#f2f2f2"></td>`;
+            }
+            html += `</tr>`;
+        });
+        html += `</tbody></table>`;
+        div.innerHTML = html;
+        return div;
+    }
+
+    function abrirMenu(e, id) {
+        celulaAtiva = id;
+        menu.style.display = 'block';
+        menu.style.left = (e.pageX > window.innerWidth - 180 ? e.pageX - 160 : e.pageX) + 'px';
+        menu.style.top = e.pageY + 'px';
+        
+        let html = `<div class="menu-item" style="color:red; font-weight:bold" onclick="limparCelula()">❌ LIMPAR</div>`;
+        residentes.forEach(r => {
+            html += `<div class="menu-item" onclick="selecionarResidente('${r}')">${r}</div>`;
+        });
+        menu.innerHTML = html;
+        e.stopPropagation();
+    }
+
+    function selecionarResidente(nome) {
+        const tipo = celulaAtiva.split('-')[0];
+        if(!escalaData[celulaAtiva]) escalaData[celulaAtiva] = [];
+
+        if(tipo === 'cong') {
+            escalaData[celulaAtiva] = [nome];
+        } else {
+            if(!escalaData[celulaAtiva].includes(nome)) escalaData[celulaAtiva].push(nome);
+        }
+        document.getElementById(celulaAtiva).innerHTML = escalaData[celulaAtiva].map(n => `<span class="badge-nome">${n}</span>`).join('');
+        fecharMenu();
+        atualizarStats();
+        save();
+    }
+
+    function limparCelula() {
+        if(celulaAtiva) {
+            document.getElementById(celulaAtiva).innerHTML = '';
+            delete escalaData[celulaAtiva];
+            fecharMenu();
+            atualizarStats();
+            save();
+        }
+    }
+
+    function fecharMenu() { menu.style.display = 'none'; }
+
+    function atualizarStats() {
+        const stats = {};
+        residentes.forEach(r => stats[r] = {cong: 0, micro: 0, macro: 0});
+
+        Object.keys(escalaData).forEach(id => {
+            const tipo = id.split('-')[0];
+            escalaData[id].forEach(nome => {
+                if(stats[nome]) stats[nome][tipo]++;
+            });
+        });
+
+        const container = document.getElementById('stats-container');
+        const counts = [];
+        residentes.forEach(r => counts.push(stats[r].cong, stats[r].micro, stats[r].macro));
+        const max = Math.max(...counts, 1);
+
+        container.innerHTML = residentes.map(r => `
+            <div class="stat-card">
+                <strong>${r}</strong>
+                <div class="stat-row">
+                    <span class="stat-label">Cong:</span>
+                    <div class="stat-bar-bg"><div class="stat-bar-fill fill-cong" style="width:${(stats[r].cong/max)*100}%"></div></div>
+                    <span class="stat-count">${stats[r].cong}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Micro:</span>
+                    <div class="stat-bar-bg"><div class="stat-bar-fill fill-micro" style="width:${(stats[r].micro/max)*100}%"></div></div>
+                    <span class="stat-count">${stats[r].micro}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Macro:</span>
+                    <div class="stat-bar-bg"><div class="stat-bar-fill fill-macro" style="width:${(stats[r].macro/max)*100}%"></div></div>
+                    <span class="stat-count">${stats[r].macro}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.onclick = fecharMenu;
+    inputData.onchange = () => { if(confirm('Mudar o mês limpará a escala atual da tela. Continuar?')) { escalaData = {}; gerarEscala(); save(); } };
+    init();
+</script>
+
+</body>
+</html>
