@@ -2,6 +2,9 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="0">
     <title>GUILIS - Gestão de Escala Patologia</title>
     <style>
         :root {
@@ -22,6 +25,10 @@
         #main-content { flex: 1; padding: 15px; }
         .container { max-width: 900px; margin: auto; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
+        /* Barra de Navegação Superior */
+        .nav-header { padding: 10px; background: #fff; border-bottom: 1px solid #ddd; margin-bottom: 15px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-header a { text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.9rem; }
+
         .semana-bloco { margin-bottom: 4px; border: 1.2px solid #000; page-break-inside: avoid; }
         .semana-header { background-color: var(--primary) !important; color: white !important; padding: 2px 10px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         
@@ -40,12 +47,12 @@
 
         /* DASHBOARD */
         .stat-card { background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
-        .stat-card strong { display: block; margin-bottom: 6px; font-size: 0.85rem; border-bottom: 1px solid #555; padding-bottom: 2px; }
-        .stat-row { display: flex; align-items: center; margin-bottom: 4px; font-size: 0.7rem; }
+        .stat-card strong { display: block; margin-bottom: 6px; font-size: 0.85rem; border-bottom: 1px solid #555; padding-bottom: 2px; color: white; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 4px; font-size: 0.7rem; color: #ccc; }
         .stat-label { width: 45px; }
         .stat-bar-bg { flex: 1; height: 7px; background: #222; border-radius: 4px; overflow: hidden; margin: 0 8px; }
         .stat-bar-fill { height: 100%; transition: width 0.3s; }
-        .stat-count { width: 15px; text-align: right; font-weight: bold; }
+        .stat-count { width: 15px; text-align: right; font-weight: bold; color: white; }
 
         .fill-cong { background-color: var(--cor-cong); }
         .fill-micro { background-color: var(--cor-micro); }
@@ -54,16 +61,38 @@
         input, button { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: none; box-sizing: border-box; }
         .btn-add { background: #27ae60; color: white; cursor: pointer; font-weight: bold; }
         .btn-print { background: #e67e22; color: white; cursor: pointer; font-weight: bold; margin-top: 15px; font-size: 1rem; }
+        .btn-stats-print { background: #2980b9; color: white; cursor: pointer; font-weight: bold; margin-top: 5px; font-size: 0.85rem; }
         
         #residente-menu { position: absolute; background: white; border: 1px solid #000; z-index: 100; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); width: 160px; border-radius: 4px; overflow: hidden; }
         .menu-item { padding: 10px; color: black; text-align: left; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.85rem; }
         .menu-item:hover { background: #f0f0f0; }
 
+        /* CONFIGURAÇÕES DE IMPRESSÃO */
         @media print {
-            #sidebar { display: none !important; }
-            body { background: white; padding: 0; }
-            .container { box-shadow: none; max-width: 100%; }
-            @page { margin: 0.4cm; size: A4 portrait; }
+            #sidebar, .nav-header { display: none !important; }
+            body { background: white; padding: 0; display: block; }
+            .container { box-shadow: none; max-width: 100%; padding: 0; }
+            @page { margin: 0.5cm; size: A4 portrait; }
+
+            /* Se estiver imprimindo apenas estatísticas */
+            body.print-stats-only #lista-semanas { display: none !important; }
+            body.print-stats-only #stats-container { 
+                display: grid !important; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 10px; 
+                color: black !important;
+            }
+            body.print-stats-only .stat-card { 
+                background: white !important; 
+                border: 1px solid #000 !important; 
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            body.print-stats-only .stat-card strong, 
+            body.print-stats-only .stat-row,
+            body.print-stats-only .stat-count { color: black !important; }
+            body:not(.print-stats-only) #stats-container { display: none !important; }
         }
     </style>
 </head>
@@ -82,17 +111,27 @@
 
     <hr style="opacity:0.2">
     <h4>Estatísticas de Justiça</h4>
-    <div id="stats-container"></div>
+    <div id="stats-container-sidebar">
+        </div>
 
-    <button class="btn-print" onclick="window.print()">IMPRIMIR ESCALA</button>
+    <button class="btn-print" onclick="imprimirEscala()">IMPRIMIR ESCALA</button>
+    <button class="btn-stats-print" onclick="imprimirStats()">IMPRIMIR BALANCEAMENTO</button>
 </div>
 
 <div id="main-content">
+    <div class="nav-header">
+        <a href="../index.html">🏠 Voltar ao Menu Principal</a>
+        <small style="color: #888;">GUILIS v1.1</small>
+    </div>
+
     <div class="container">
-        <div style="text-align: center; margin-bottom: 5px;">
+        <div id="cabecalho-print" style="text-align: center; margin-bottom: 5px;">
             <h2 style="margin: 0; font-size: 1.1rem; letter-spacing: 1px;">ESCALA DE RESIDENTES - HUOL</h2>
             <span id="label-mes" style="font-weight: bold; text-transform: uppercase; font-size: 0.9rem; color: #444;"></span>
         </div>
+        
+        <div id="stats-container" style="display: none;"></div>
+
         <div id="lista-semanas"></div>
     </div>
 </div>
@@ -100,9 +139,7 @@
 <div id="residente-menu"></div>
 
 <script>
-    // Lista inicial conforme solicitado
     const residentesPadrao = ["Luana", "Liana", "Lucas", "Henrique", "Renato", "David", "Rafael"];
-    
     let residentes = JSON.parse(localStorage.getItem('guilis_residentes')) || residentesPadrao;
     let escalaData = JSON.parse(localStorage.getItem('guilis_escala')) || {};
     let celulaAtiva = null;
@@ -173,7 +210,6 @@
             }
         }
 
-        // Reconectar dados salvos
         Object.keys(escalaData).forEach(id => {
             const el = document.getElementById(id);
             if(el) {
@@ -266,12 +302,11 @@
             });
         });
 
-        const container = document.getElementById('stats-container');
         const counts = [];
         residentes.forEach(r => counts.push(stats[r].cong, stats[r].micro, stats[r].macro));
         const max = Math.max(...counts, 1);
 
-        container.innerHTML = residentes.map(r => `
+        const statsHtml = residentes.map(r => `
             <div class="stat-card">
                 <strong>${r}</strong>
                 <div class="stat-row">
@@ -291,10 +326,23 @@
                 </div>
             </div>
         `).join('');
+
+        document.getElementById('stats-container-sidebar').innerHTML = statsHtml;
+        document.getElementById('stats-container').innerHTML = statsHtml;
+    }
+
+    function imprimirEscala() {
+        document.body.classList.remove('print-stats-only');
+        window.print();
+    }
+
+    function imprimirStats() {
+        document.body.classList.add('print-stats-only');
+        window.print();
     }
 
     window.onclick = fecharMenu;
-    inputData.onchange = () => { if(confirm('Mudar o mês limpará a escala atual da tela. Continuar?')) { escalaData = {}; gerarEscala(); save(); } };
+    inputData.onchange = () => { if(confirm('Mudar o mês limpará a escala atual?')) { escalaData = {}; gerarEscala(); save(); } };
     init();
 </script>
 
