@@ -3,112 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
-    <title>GUILIS - Gestão de Escala Patologia</title>
+    <title>GUILIS v2.2 - Escala Final</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #4a66b4;
             --header-tabela: #c0dbd5;
-            --cor-cong: #7c8ee9;
-            --cor-micro: #81c784;
-            --cor-macro: #ffd54f;
+            --cor-cong: #2980b9; 
+            --cor-micro: #27ae60; 
+            --cor-macro: #e67e22; 
+            --bg-escala: #ffffff;
+            --bg-stats-img: #f8f9fa; /* Cor de fundo para a imagem de status */
         }
 
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: #f0f0f0; height: 100vh; overflow: hidden; }
         
-        #sidebar { 
-            width: 320px; background: #2c3e50; color: white; padding: 20px; 
-            height: 100vh; overflow-y: auto; box-sizing: border-box;
-        }
+        #sidebar { width: 320px; background: #2c3e50; color: white; padding: 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+        #main-content { flex: 1; padding: 10px; overflow-y: auto; height: 100vh; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
-        #main-content { flex: 1; padding: 15px; overflow-y: auto; height: 100vh; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav-header { padding: 8px; background: #fff; border-bottom: 1px solid #ddd; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
+        .nav-header a { text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.85rem; }
 
-        .nav-header { padding: 10px; background: #fff; border-bottom: 1px solid #ddd; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
-        .nav-header a { text-decoration: none; color: var(--primary); font-weight: bold; }
-
-        /* ESCALA */
-        .semana-bloco { margin-bottom: 10px; border: 1.5px solid #000; background: white; }
-        .semana-header { background-color: var(--primary); color: white; padding: 5px 10px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
-        
+        .semana-bloco { margin-bottom: 12px; border: 1.2px solid #000; background: white; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 0.75rem; vertical-align: middle; position: relative; }
-        th { background-color: var(--header-tabela); height: 25px; font-weight: bold; font-size: 0.85rem; }
-        .cargo-col { width: 95px; font-weight: bold; text-align: left; padding-left: 5px; background: #dfd8d8; }
+        th, td { border: 1px solid #000; padding: 3px; text-align: center; vertical-align: middle; position: relative; }
+        th { background-color: var(--header-tabela); height: 28px; font-weight: bold; font-size: 0.85rem; }
+        .semana-col { width: 50px; background-color: #dfd8d8 !important; font-size: 0.75rem; font-weight: bold; color: #333; }
         
-        /* AJUSTE DE ALTURA DAS LINHAS */
-        .cong-row { background-color: var(--cor-cong) !important; height: 32px; } /* Congelação Reduzida */
-        .micro-row { background-color: #e8f5e9 !important; min-height: 70px; height: auto; }
-        .macro-row { background-color: #fff9c4 !important; min-height: 70px; height: auto; }
+        .cong-row { background-color: #7c8ee9 !important; height: 35px; }
+        .micro-row { background-color: #e8f5e9 !important; min-height: 65px; height: auto; }
+        .macro-row { background-color: #fff9c4 !important; min-height: 65px; height: auto; }
         
-        /* ESTILO DOS NOMES */
+        /* FONTE DOS NOMES AUMENTADA */
         .badge-nome { 
-            background: transparent; 
-            padding: 2px 4px; 
-            font-size: 0.95rem; 
-            margin: 2px;
-            display: inline-flex; 
-            align-items: center; 
-            font-weight: 600; 
-            color: #000;
+            background: transparent; padding: 2px 4px; font-size: 1.05rem; /* Fonte maior */
+            margin: 1px; display: inline-flex; align-items: center; 
+            font-weight: 700; color: #000; white-space: nowrap; 
         }
+        .btn-rm-nome { color: #e74c3c; cursor: pointer; margin-left: 4px; font-weight: bold; font-size: 1rem; }
+        .input-cell { width: 100%; border: none; background: transparent; text-align: center; font-size: 0.9rem; outline: none; }
 
-        /* Botão de remover VISÍVEL na edição */
-        .btn-rm-nome { 
-            color: #e74c3c; 
-            cursor: pointer; 
-            margin-left: 5px; 
-            font-weight: bold; 
-            font-size: 0.9rem;
-            display: inline-block;
-            line-height: 1;
-        }
-
-        .input-cell { width: 100%; border: none; background: transparent; text-align: center; font-size: 0.8rem; outline: none; margin-top: 2px; }
+        /* BARRAS DE STATUS */
+        .stat-card { background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); transition: 0.3s; }
+        .stat-card strong { display: block; margin-bottom: 4px; font-size: 0.9rem; color: white; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 3px; font-size: 0.75rem; color: #ccc; }
+        .stat-label { width: 40px; }
+        .stat-bar-bg { flex: 1; height: 8px; background: #222; border-radius: 4px; overflow: hidden; margin: 0 8px; }
+        .stat-bar-fill { height: 100%; }
+        .stat-count { width: 15px; text-align: right; font-weight: bold; color: white; }
         
-        /* DASHBOARD SIDEBAR */
-        .stat-card { background: #34495e; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--primary); }
-        .stat-card strong { display: block; margin-bottom: 6px; font-size: 0.9rem; color: white; }
-        .stat-row { display: flex; align-items: center; margin-bottom: 5px; font-size: 0.75rem; color: #ccc; }
-        .stat-label { width: 50px; }
-        .stat-bar-bg { flex: 1; height: 7px; background: #222; border-radius: 4px; overflow: hidden; margin: 0 10px; }
-        .stat-bar-fill { height: 100%; transition: width 0.3s; }
-        .stat-count { width: 20px; text-align: right; font-weight: bold; color: white; }
-        .fill-cong { background-color: var(--cor-cong); }
-        .fill-micro { background-color: var(--cor-micro); }
-        .fill-macro { background-color: var(--cor-macro); }
+        .fill-cong { background-color: var(--cor-cong) !important; }
+        .fill-micro { background-color: var(--cor-micro) !important; }
+        .fill-macro { background-color: var(--cor-macro) !important; }
 
-        /* AUTOCOMPLETE */
         #autocomplete-list { position: absolute; background: white; border: 1px solid #000; z-index: 1000; width: 160px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .sugestao-item { padding: 10px; cursor: pointer; color: #333; font-size: 0.85rem; border-bottom: 1px solid #eee; }
         .sugestao-item:hover { background: var(--primary); color: white; }
 
-        /* BOTÕES */
-        button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-add { background: #27ae60; color: white; }
+        .btn-magic { background: #f39c12; color: white; margin-bottom: 15px; border: 2px solid #fff; }
         .btn-copy { background: #8e44ad; color: white; }
         
-        /* OCULTAR APENAS NA GERAÇÃO DA IMAGEM */
-        .no-export { visibility: hidden !important; width: 0 !important; margin: 0 !important; padding: 0 !important; }
-
-        .img-stat-card { background: white !important; border: 1px solid #000 !important; color: black !important; }
-        .img-stat-text { color: black !important; }
+        .no-export { visibility: hidden !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
+        
+        /* ESTILO DA IMAGEM DE STATUS EXPORTADA */
+        .img-mode .stat-card { background: #ffffff !important; border: 1px solid #ddd !important; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
+        .img-mode .stat-card strong, .img-mode .stat-count, .img-mode .stat-label { color: #333 !important; }
+        .img-mode .stat-bar-bg { background: #eee !important; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h3 style="margin:0">GUILIS v1.6</h3>
-    <input type="month" id="mes-selecionado" value="2026-02" style="width:100%; padding:8px; margin-top:5px;">
+    <h3 style="margin:0">GUILIS v2.2</h3>
+    <input type="month" id="mes-selecionado" value="2026-02" style="width:100%; padding:8px; margin-top:5px; margin-bottom:10px;">
     
-    <hr style="opacity:0.2; margin: 20px 0;">
-    <h4>Lista de Residentes</h4>
+    <button class="btn-magic" onclick="sugerirEscala()">✨ SUGERIR ESCALA</button>
+
+    <hr style="opacity:0.2; margin: 15px 0;">
     <div id="lista-cadastro"></div>
-    <input type="text" id="novo-residente" placeholder="Nome..." style="width:100%; padding:8px; margin-top:5px; border-radius:4px; border:none;">
+    <input type="text" id="novo-residente" placeholder="Novo residente..." style="width:100%; padding:8px; margin-top:5px;">
     <button class="btn-add" onclick="addResidente()">ADICIONAR</button>
 
-    <hr style="opacity:0.2; margin: 20px 0;">
-    <h4>Balanceamento</h4>
+    <hr style="opacity:0.2; margin: 15px 0;">
     <div id="stats-sidebar"></div>
 
     <button class="btn-copy" onclick="copiarComTitulo('lista-semanas')">📋 COPIAR ESCALA</button>
@@ -118,17 +97,17 @@
 <div id="main-content">
     <div class="nav-header">
         <a href="../index.html">🏠 Menu Principal</a>
-        <span id="status-msg" style="font-size: 0.9rem; color: #27ae60; font-weight: bold;"></span>
+        <span id="status-msg" style="font-size: 0.85rem; color: #27ae60; font-weight: bold;"></span>
     </div>
 
     <div class="container" id="capture-area">
-        <div id="print-header" style="text-align: center; margin-bottom: 15px;">
+        <div id="print-header" style="text-align: center; margin-bottom: 10px;">
             <h2 style="margin: 0; font-size: 1.4rem; color: #000;">ESCALA DE RESIDENTES - HUOL</h2>
             <span id="label-mes" style="font-weight: bold; text-transform: uppercase; font-size: 1.1rem; color: #444;"></span>
         </div>
         
         <div id="lista-semanas"></div>
-        <div id="stats-container" style="display: none;"></div>
+        <div id="stats-container" style="display: none; padding: 15px; border-radius: 8px;"></div>
     </div>
 </div>
 
@@ -146,46 +125,56 @@
 
     function addResidente() {
         const input = document.getElementById('novo-residente');
-        if(input.value) {
-            residentes.push(input.value);
-            input.value = '';
-            renderResidentes(); atualizarStats(); save();
-        }
+        if(input.value) { residentes.push(input.value); input.value = ''; renderResidentes(); atualizarStats(); save(); }
     }
 
     function renderResidentes() {
         document.getElementById('lista-cadastro').innerHTML = residentes.map((r, i) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px; background:#34495e; padding:6px; border-radius:4px; font-size:0.85rem;">
-                <span>${r}</span>
-                <span onclick="removerResidente(${i})" style="cursor:pointer; color:#e74c3c; font-weight:bold;">×</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; background:#34495e; padding:5px; border-radius:4px; font-size:0.8rem;">
+                <span>${r}</span><span onclick="removerResidente(${i})" style="cursor:pointer; color:#e74c3c;">×</span>
             </div>
         `).join('');
     }
 
     function removerResidente(i) {
-        if(confirm('Remover da lista?')) { residentes.splice(i,1); renderResidentes(); atualizarStats(); save(); }
+        if(confirm('Remover?')) { residentes.splice(i,1); renderResidentes(); atualizarStats(); save(); }
+    }
+
+    function sugerirEscala() {
+        const nMicro = parseInt(prompt("Residentes na MICRO/dia:", "2"));
+        const nMacro = parseInt(prompt("Residentes na MACRO/dia:", "2"));
+        if (isNaN(nMicro) || isNaN(nMacro)) return;
+
+        escalaData = {};
+        const [ano, mes] = document.getElementById('mes-selecionado').value.split('-').map(Number);
+        const ultimoDia = new Date(ano, mes, 0).getDate();
+        const sorteados = [...residentes].sort(() => Math.random() - 0.5);
+        let ptr = 0;
+
+        for (let d = 1; d <= ultimoDia; d++) {
+            const data = new Date(ano, mes-1, d);
+            if (data.getDay() >= 1 && data.getDay() <= 5) {
+                escalaData[`cong-${d}`] = [sorteados[ptr++ % residentes.length]];
+                let mi = []; for(let i=0; i<nMicro; i++) mi.push(sorteados[ptr++ % residentes.length]);
+                escalaData[`micro-${d}`] = mi;
+                let ma = []; for(let i=0; i<nMacro; i++) ma.push(sorteados[ptr++ % residentes.length]);
+                escalaData[`macro-${d}`] = ma;
+            }
+        }
+        gerarEscala(); save();
     }
 
     function gerarEscala() {
         const [ano, mes] = document.getElementById('mes-selecionado').value.split('-').map(Number);
         document.getElementById('label-mes').innerText = new Date(ano, mes-1).toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'});
-
         const container = document.getElementById('lista-semanas');
         container.innerHTML = '';
         const ultimoDia = new Date(ano, mes, 0).getDate();
         let diasUteis = [], contadorSemana = 1;
-
         for (let d = 1; d <= ultimoDia; d++) {
             const data = new Date(ano, mes-1, d);
-            if (data.getDay() >= 1 && data.getDay() <= 5) {
-                diasUteis.push({dia: d, label: data.toLocaleDateString('pt-BR', {weekday:'short'}).toUpperCase().replace('.','')});
-            }
-            if (data.getDay() === 5 || d === ultimoDia) {
-                if (diasUteis.length > 0) {
-                    container.appendChild(criarTabelaSemana(contadorSemana++, diasUteis, mes));
-                    diasUteis = [];
-                }
-            }
+            if (data.getDay() >= 1 && data.getDay() <= 5) diasUteis.push({ dia: d, label: data.toLocaleDateString('pt-BR', {weekday:'long'}).toUpperCase() });
+            if (data.getDay() === 5 || d === ultimoDia) { if (diasUteis.length > 0) { container.appendChild(criarTabelaSemana(contadorSemana++, diasUteis, mes)); diasUteis = []; } }
         }
         renderizarBadges(); atualizarStats();
     }
@@ -193,12 +182,15 @@
     function criarTabelaSemana(num, dias, mes) {
         const div = document.createElement('div');
         div.className = 'semana-bloco';
-        const setores = [{id:'cong', label:'Congelação', cl:'cong-row'}, {id:'micro', label:'Microscopia', cl:'micro-row'}, {id:'macro', label:'Macroscopia', cl:'macro-row'}];
-        let html = `<div class="semana-header">Semana ${num}</div><table><thead><tr><th class="cargo-col">SETOR</th>`;
-        for(let i=0; i<5; i++) html += `<th>${dias[i] ? dias[i].dia+'/'+(mes < 10 ? '0'+mes : mes)+'<br>'+dias[i].label : '-'}</th>`;
+        const setores = [{id:'cong', label:'CONG'}, {id:'micro', label:'MICRO'}, {id:'macro', label:'MACRO'}];
+        let html = `<table><thead><tr><th class="semana-col">SEM ${num}</th>`;
+        for(let i=0; i<5; i++) {
+            if(dias[i]) html += `<th>${dias[i].dia}/${mes < 10 ? '0'+mes : mes} ${dias[i].label}</th>`;
+            else html += `<th style="background:#f2f2f2"></th>`;
+        }
         html += `</tr></thead><tbody>`;
         setores.forEach(s => {
-            html += `<tr class="${s.cl}"><td class="cargo-col">${s.label}</td>`;
+            html += `<tr class="${s.id}-row"><td class="semana-col">${s.label}</td>`;
             for(let i=0; i<5; i++) {
                 if(dias[i]) {
                     const id = `${s.id}-${dias[i].dia}`;
@@ -207,16 +199,15 @@
             }
             html += `</tr>`;
         });
-        div.innerHTML = html + `</tbody></table>`;
-        return div;
+        return (div.innerHTML = html + `</tbody></table>`, div);
     }
 
     function showAuto(e, id) {
         const val = e.target.value.toLowerCase();
         const list = document.getElementById('autocomplete-list');
-        if (!val) { list.style.display = 'none'; return; }
+        if (!val) return list.style.display = 'none';
         const filtered = residentes.filter(r => r.toLowerCase().includes(val));
-        if (filtered.length === 0) { list.style.display = 'none'; return; }
+        if (filtered.length === 0) return list.style.display = 'none';
         list.style.display = 'block';
         list.style.left = e.target.getBoundingClientRect().left + 'px';
         list.style.top = (e.target.getBoundingClientRect().bottom + window.scrollY) + 'px';
@@ -236,8 +227,8 @@
         Object.keys(escalaData).forEach(id => {
             const container = document.getElementById(`badges-${id}`);
             if (container) {
-                container.innerHTML = escalaData[id].map((n, i) => `
-                    <span class="badge-nome">${n}<span class="btn-rm-nome" onclick="removeBadge('${id}', ${i})">×</span></span>
+                container.innerHTML = (escalaData[id] || []).map((n, i) => `
+                    <span class="badge-nome">${n}<span class="btn-rm-nome no-export" onclick="removeBadge('${id}', ${i})">×</span></span>
                 `).join('');
             }
         });
@@ -250,19 +241,18 @@
     }
 
     function atualizarStats() {
-        const stats = {};
-        residentes.forEach(r => stats[r] = {cong:0, micro:0, macro:0});
+        const stats = {}; residentes.forEach(r => stats[r] = {cong:0, micro:0, macro:0});
         Object.keys(escalaData).forEach(id => {
             const tipo = id.split('-')[0];
-            escalaData[id].forEach(n => { if(stats[n]) stats[n][tipo]++; });
+            (escalaData[id] || []).forEach(n => { if(stats[n]) stats[n][tipo]++; });
         });
         const max = Math.max(...residentes.map(r => Math.max(stats[r].cong, stats[r].micro, stats[r].macro)), 1);
-        const render = (isSidebar) => residentes.map(r => `
-            <div class="stat-card ${!isSidebar ? 'img-stat-card' : ''}">
-                <strong class="${!isSidebar ? 'img-stat-text' : ''}">${r}</strong>
-                <div class="stat-row"><span class="stat-label ${!isSidebar ? 'img-stat-text' : ''}">Cong:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-cong" style="width:${(stats[r].cong/max)*100}%"></div></div><span class="stat-count ${!isSidebar ? 'img-stat-text' : ''}">${stats[r].cong}</span></div>
-                <div class="stat-row"><span class="stat-label ${!isSidebar ? 'img-stat-text' : ''}">Micro:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-micro" style="width:${(stats[r].micro/max)*100}%"></div></div><span class="stat-count ${!isSidebar ? 'img-stat-text' : ''}">${stats[r].micro}</span></div>
-                <div class="stat-row"><span class="stat-label ${!isSidebar ? 'img-stat-text' : ''}">Macro:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-macro" style="width:${(stats[r].macro/max)*100}%"></div></div><span class="stat-count ${!isSidebar ? 'img-stat-text' : ''}">${stats[r].macro}</span></div>
+        const render = (isS) => residentes.map(r => `
+            <div class="stat-card">
+                <strong>${r}</strong>
+                <div class="stat-row"><span class="stat-label">Cg:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-cong" style="width:${(stats[r].cong/max)*100}%"></div></div><span class="stat-count">${stats[r].cong}</span></div>
+                <div class="stat-row"><span class="stat-label">Mi:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-micro" style="width:${(stats[r].micro/max)*100}%"></div></div><span class="stat-count">${stats[r].micro}</span></div>
+                <div class="stat-row"><span class="stat-label">Ma:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-macro" style="width:${(stats[r].macro/max)*100}%"></div></div><span class="stat-count">${stats[r].macro}</span></div>
             </div>
         `).join('');
         document.getElementById('stats-sidebar').innerHTML = render(true);
@@ -270,40 +260,46 @@
     }
 
     async function copiarComTitulo(idMostra) {
-        const captureArea = document.getElementById('capture-area');
+        const area = document.getElementById('capture-area');
         const escala = document.getElementById('lista-semanas');
         const status = document.getElementById('stats-container');
-        
-        // Esconde os elementos interativos
         const rms = document.querySelectorAll('.btn-rm-nome');
         const inputs = document.querySelectorAll('.input-cell');
-
-        escala.style.display = (idMostra === 'lista-semanas') ? 'block' : 'none';
-        status.style.display = (idMostra === 'stats-container') ? 'grid' : 'none';
         
+        // Ativar modo imagem (fundo cinza e texto preto no status)
+        if(idMostra === 'stats-container') {
+            status.style.display = 'grid';
+            status.style.backgroundColor = '#f1f1f1'; // Fundo da imagem de status
+            area.classList.add('img-mode');
+            escala.style.display = 'none';
+        } else {
+            escala.style.display = 'block';
+            status.style.display = 'none';
+        }
+
         rms.forEach(b => b.classList.add('no-export'));
         inputs.forEach(i => i.classList.add('no-export'));
 
         const msg = document.getElementById('status-msg');
-        msg.innerText = "Copiando...";
+        msg.innerText = "Gerando imagem...";
 
         try {
-            const canvas = await html2canvas(captureArea, { backgroundColor: '#ffffff', scale: 3 });
+            const canvas = await html2canvas(area, { backgroundColor: '#ffffff', scale: 3 });
             canvas.toBlob(async (blob) => {
                 await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-                msg.innerText = "✅ Imagem copiada!";
-                setTimeout(() => msg.innerText = "", 3000);
+                msg.innerText = "✅ Copiado!"; setTimeout(() => msg.innerText = "", 3000);
             });
         } catch (err) { msg.innerText = "❌ Erro."; }
 
-        // Restaura a visualização de edição
+        // Resetar visualização
         escala.style.display = 'block';
         status.style.display = 'none';
+        area.classList.remove('img-mode');
         rms.forEach(b => b.classList.remove('no-export'));
         inputs.forEach(i => i.classList.remove('no-export'));
     }
 
-    document.getElementById('mes-selecionado').onchange = () => { if(confirm('Limpar escala atual?')) { escalaData={}; gerarEscala(); save(); } };
+    document.getElementById('mes-selecionado').onchange = () => { if(confirm('Mudar mês limpa a escala?')) { escalaData={}; gerarEscala(); save(); } };
     window.onclick = () => document.getElementById('autocomplete-list').style.display = 'none';
     renderResidentes(); gerarEscala();
 </script>
