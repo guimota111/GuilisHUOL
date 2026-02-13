@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <title>GUILIS - PICQ v4.3 (Final)</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c;
+            --huol: #4a66b4;
+            --liga: #27ae60;
+            --bg: #f4f7f6;
+        }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: var(--bg); height: 100vh; overflow: hidden; }
+        
+        #sidebar { width: 500px; background: var(--primary); color: white; padding: 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; border-right: 5px solid var(--huol); }
+        #main-content { flex: 1; padding: 20px; overflow-y: auto; height: 100vh; }
+        
+        .setup-section { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        h4 { margin: 0 0 10px 0; color: #fff; border-bottom: 1px solid #555; padding-bottom: 5px; font-size: 0.85rem; text-transform: uppercase; }
+
+        /* BALANCEAMENTO */
+        .stat-card-picq { background: rgba(0,0,0,0.1); padding: 10px; border-radius: 6px; margin-bottom: 8px; color: white; }
+        .stat-bar-container { display: flex; gap: 6px; margin-top: 5px; }
+        .stat-mini-bar { flex: 1; height: 8px; background: #444; border-radius: 4px; overflow: hidden; }
+        .stat-fill-casos { height: 100%; background: var(--huol); }
+        .stat-fill-teor { height: 100%; background: var(--liga); }
+
+        /* TRIAGEM */
+        .q-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 10px; }
+        .q-item { font-size: 0.75rem; padding: 8px 0; background: #34495e; border-radius: 4px; cursor: pointer; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
+        .q-item.exclude { background: var(--accent); border-color: white; font-weight: bold; }
+        
+        /* INPUTS DE REPETIÇÃO */
+        .nota-input-wrapper { background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #f1c40f; }
+        .nota-grid-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+        .mini-group { display: flex; flex-direction: column; }
+        .mini-input { width: 100%; padding: 8px; font-size: 0.9rem; border-radius: 4px; border: 1px solid #555; background: #fff; color: #333; text-align: center; box-sizing: border-box; }
+        .mini-label { font-size: 0.7rem; color: #ccc; margin-bottom: 3px; font-weight: bold; text-transform: uppercase; }
+
+        /* ESCALA E EXPORTAÇÃO */
+        .container { max-width: 900px; margin: auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        
+        .dia-bloco { margin-bottom: 30px; border-left: 6px solid var(--huol); padding-left: 20px; min-height: 80px; }
+        .dia-bloco.drag-over { background-color: #e8f4f8; border: 2px dashed #27ae60; }
+        .dia-titulo { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-bottom: 15px; background: #f8f9fa; padding: 8px 12px; border-radius: 4px; }
+        
+        .item-escala { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dotted #ccc; cursor: grab; background: white; }
+        .item-escala:active { cursor: grabbing; opacity: 0.6; }
+        .select-edit { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; font-weight: 700; color: var(--accent); text-transform: uppercase; cursor: pointer; }
+
+        /* ESTILOS DE EXPORTAÇÃO (IMPRESSÃO) */
+        #balanceamento-export { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-card-export { background: #f9f9f9; padding: 15px; border: 1px solid #eee; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: #333; }
+        
+        #escala-grid-export { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .dia-export { border: 2px solid #333; background: #fff; break-inside: avoid; }
+        .dia-header-export { background: var(--primary); color: white; font-weight: bold; text-transform: uppercase; padding: 8px; text-align: center; border-bottom: 2px solid #333; }
+        .item-export { padding: 6px 10px; border-bottom: 1px solid #ccc; font-size: 0.85rem; display: flex; justify-content: space-between; }
+        .item-export strong { color: #c0392b; text-transform: uppercase; }
+
+        .report-item { font-size: 0.95rem; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #fee2e2; }
+        .report-q { font-weight: 800; color: var(--accent); min-width: 150px; display: inline-block; }
+
+        button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .btn-generate { background: #f39c12; color: white; border: 2px solid white; }
+        .btn-copy-escala { background: #8e44ad; color: white; }
+        .btn-copy-report { background: #c0392b; color: white; }
+        .btn-copy-balance { background: #27ae60; color: white; }
+        .btn-reset { background: #7f8c8d; color: white; margin-top: 30px; border: 1px solid #999; }
+        .btn-reset:hover { background: #c0392b; border-color: #c0392b; }
+        
+        .label-small { font-size: 0.75rem; color: #bdc3c7; font-weight: bold; display: block; margin: 10px 0 5px 0; }
+        .info-carga { font-size: 0.85rem; color: #f1c40f; font-weight: bold; margin-bottom: 8px; display: block; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; text-align: center; }
+        .pool-item { display: flex; justify-content: space-between; padding: 6px 10px; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 4px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h3 style="margin-top:0">GUILIS - PICQ v4.3</h3>
+    
+    <div class="setup-section">
+        <h4>1. BALANCEAMENTO</h4>
+        <div id="balanceamento-sidebar"></div>
+        <button class="btn-copy-balance" onclick="copiarImagem('capture-balanceamento')">📊 COPIAR CARGA</button>
+    </div>
+
+    <div class="setup-section">
+        <h4>2. TRIAGEM</h4>
+        <span class="label-small">CASOS HUOL</span><div class="q-grid" id="grid-ch"></div>
+        <span class="label-small">QUESTÕES HUOL</span><div class="q-grid" id="grid-th"></div>
+        <span class="label-small">CASOS LIGA</span><div class="q-grid" id="grid-cl"></div>
+        <span class="label-small">QUESTÕES LIGA</span><div class="q-grid" id="grid-tl"></div>
+    </div>
+
+    <div class="setup-section" id="section-notas" style="display:none">
+        <h4>3. REFERÊNCIA DE REPETIÇÃO</h4>
+        <div id="notas-exclusao-input"></div>
+    </div>
+
+    <div class="setup-section">
+        <h4>4. DATAS</h4>
+        <span id="previsao-carga" class="info-carga">Ativos: 48 | ~24 por dia</span>
+        <input type="number" id="num-datas" value="2" min="1" max="10" onchange="gerarCamposDatas(); atualizarPrevisao();">
+        <div id="campos-datas"></div>
+    </div>
+    
+    <div class="setup-section">
+        <h4>5. RESIDENTES (POOL)</h4>
+        <div id="pool-residentes"></div>
+        <div style="display: flex; gap: 5px; margin-top: 8px;">
+            <input type="text" id="novo-nome" placeholder="Nome..." style="width: 100%; padding: 8px; border-radius: 4px; border:none;">
+            <button onclick="adicionarAoPool()" style="width: 50px; margin:0; background: var(--huol); color:white; font-weight:bold;">+</button>
+        </div>
+    </div>
+
+    <button class="btn-generate" onclick="distribuirPICQ()">⚡ GERAR ESCALA (DRAG & DROP)</button>
+    <button class="btn-copy-escala" onclick="copiarImagem('capture-escala-export')">📅 COPIAR CRONOGRAMA</button>
+    <button class="btn-copy-report" onclick="copiarImagem('capture-report')">📝 COPIAR RELATÓRIO</button>
+    <button class="btn-reset" onclick="zerarTudo()">🗑️ ZERAR TUDO</button>
+</div>
+
+<div id="main-content">
+    <div id="capture-balanceamento" style="display: none; width: 800px; background: white; padding: 20px;">
+        <h2 style="margin-top:0; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 10px; text-align: center;">📊 BALANCEAMENTO DE CARGA</h2>
+        <div id="balanceamento-export"></div>
+    </div>
+
+    <div class="container" id="tela-escala-interativa">
+        <div style="text-align: center; border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px;">
+            <h1 style="margin:0; font-size: 2rem;">CRONOGRAMA PICQ</h1>
+            <p style="margin:5px 0; color: #666; font-weight: bold;">Arraste para mudar o dia | Selecione para trocar</p>
+        </div>
+        <div id="escala-result"><p style="text-align:center; color:#999;">Marque as repetidas e clique em Gerar.</p></div>
+    </div>
+
+    <div id="capture-escala-export" style="display: none; width: 1000px; background: white; padding: 30px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="margin:0; font-size: 2.5rem; color: #2c3e50;">CRONOGRAMA DE APRESENTAÇÃO - PICQ</h1>
+            <p style="font-size: 1.2rem; color: #666;">Hospital Universitário Onofre Lopes</p>
+        </div>
+        <div id="escala-grid-export"></div>
+    </div>
+
+    <div class="container report-box" id="capture-report" style="display: none; background:#fff;">
+        <h1 style="margin:0 0 20px 0; font-size: 1.6rem; color: var(--accent); border-bottom: 3px solid var(--accent);">📌 RELATÓRIO DE REPETIÇÕES</h1>
+        <div id="lista-exclusoes"></div>
+    </div>
+</div>
+
+<script>
+    let residentes = JSON.parse(localStorage.getItem('guilis_residentes')) || ["Luana", "Liana", "Lucas", "Henrique", "Renato", "David", "Rafael"];
+    let excluidas = {}; 
+    let escalaPorDia = [];
+    let dragSrcInfo = null;
+
+    const configTipos = { 'ch': { l: 'Caso', i: 'HUOL' }, 'th': { l: 'Questão', i: 'HUOL' }, 'cl': { l: 'Caso', i: 'LIGA' }, 'tl': { l: 'Questão', i: 'LIGA' } };
+
+    function init() {
+        renderBalanceamento(); gerarCamposDatas(); atualizarPrevisao(); renderPool();
+        Object.keys(configTipos).forEach(key => {
+            const cont = document.getElementById(`grid-${key}`);
+            for(let i=1; i<=12; i++) {
+                const id = `${key}-${i}`;
+                const div = document.createElement('div');
+                div.className = 'q-item'; div.innerText = i;
+                div.onclick = () => { 
+                    if(div.classList.toggle('exclude')) {
+                        excluidas[id] = { ed: "", q: i }; 
+                    } else {
+                        delete excluidas[id];
+                    }
+                    renderCamposNotas(); atualizarPrevisao();
+                };
+                cont.appendChild(div);
+            }
+        });
+    }
+    
+    function adicionarAoPool() { const i = document.getElementById('novo-nome'); if(i.value){ residentes.push(i.value); i.value=''; renderPool(); renderBalanceamento(); localStorage.setItem('guilis_residentes', JSON.stringify(residentes)); } }
+    function removerDoPool(i) { if(confirm("Remover residente?")){ residentes.splice(i,1); renderPool(); renderBalanceamento(); localStorage.setItem('guilis_residentes', JSON.stringify(residentes)); } }
+    function renderPool() { document.getElementById('pool-residentes').innerHTML = residentes.map((r, i) => `<div class="pool-item"><span>${r}</span><span style="cursor:pointer;color:#e74c3c;font-weight:bold;" onclick="removerDoPool(${i})">×</span></div>`).join(''); }
+
+    function zerarTudo() {
+        if(!confirm("Zerar tudo?")) return;
+        excluidas = {}; escalaPorDia = [];
+        document.querySelectorAll('.q-item').forEach(el => el.classList.remove('exclude'));
+        renderCamposNotas(); atualizarPrevisao(); renderBalanceamento();
+        document.getElementById('escala-result').innerHTML = '<p style="text-align:center; color:#999;">Limpo.</p>';
+        document.getElementById('capture-report').style.display = 'none';
+    }
+
+    function atualizarPrevisao() {
+        const total = 48 - Object.keys(excluidas).length;
+        const n = document.getElementById('num-datas').value;
+        const media = Math.ceil(total / n);
+        document.getElementById('previsao-carga').innerText = `Ativos: ${total} itens | Média: ~${media} p/ dia`;
+    }
+
+    function renderCamposNotas() {
+        const ids = Object.keys(excluidas).sort();
+        document.getElementById('section-notas').style.display = ids.length > 0 ? 'block' : 'none';
+        document.getElementById('notas-exclusao-input').innerHTML = ids.map(id => {
+            const p = id.split('-'); const meta = configTipos[p[0]];
+            // Lógica de "espelho" para a label da caixa de repetição
+            // Se estou excluindo HUOL, pergunto sobre LIGA
+            const instContraria = (meta.i === 'HUOL') ? 'LIGA' : 'HUOL';
+            
+            return `
+                <div class="nota-input-wrapper">
+                    <span style="color:#f1c40f;font-size:0.75rem;">${meta.l} ${p[1]} ${meta.i} igual à ${instContraria}:</span>
+                    <div class="nota-grid-mini">
+                        <div class="mini-group">
+                            <span class="mini-label">EDIÇÃO PICQ</span>
+                            <input type="number" class="mini-input" value="${excluidas[id].ed}" oninput="excluidas['${id}'].ed = this.value">
+                        </div>
+                        <div class="mini-group">
+                            <span class="mini-label">Nº DA QUESTÃO</span>
+                            <input type="number" class="mini-input" value="${excluidas[id].q}" oninput="excluidas['${id}'].q = this.value">
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function distribuirPICQ() {
+        if(residentes.length === 0) return alert("Erro no pool.");
+        let lista = [];
+        const insts = [{id:'h', label:'HUOL'}, {id:'l', label:'LIGA'}];
+        insts.forEach(ins => {
+            for(let i=1; i<=12; i++) {
+                if(!excluidas[`c${ins.id}-${i}`]) lista.push({ label: `Caso ${i} ${ins.label}`, tipo: 'caso' });
+                if(!excluidas[`t${ins.id}-${i}`]) lista.push({ label: `Questão ${i} ${ins.label}`, tipo: 'teor' });
+            }
+        });
+
+        let ptrC = 0, ptrT = 0;
+        let sC = [...residentes].sort(() => Math.random() - 0.5);
+        let sT = [...residentes].sort(() => Math.random() - 0.5);
+
+        let escalaBruta = lista.map(item => {
+            let r = (item.tipo === 'caso') ? sC[ptrC++ % residentes.length] : sT[ptrT++ % residentes.length];
+            return { ...item, residente: r };
+        });
+
+        escalaPorDia = [];
+        const nDatas = document.getElementById('num-datas').value;
+        const porDia = Math.ceil(escalaBruta.length / nDatas);
+        for(let i=0; i<nDatas; i++) {
+            escalaPorDia.push(escalaBruta.slice(i*porDia, (i+1)*porDia));
+        }
+
+        renderEscala(); renderRelatorio(); renderBalanceamento();
+    }
+
+    // DRAG AND DROP
+    function handleDragStart(e, dayIndex, itemIndex) {
+        dragSrcInfo = { day: dayIndex, item: itemIndex };
+        e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.4';
+    }
+    function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+    function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+    function handleDrop(e, targetDayIndex) {
+        e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+        if (dragSrcInfo === null) return;
+        const item = escalaPorDia[dragSrcInfo.day][dragSrcInfo.item];
+        escalaPorDia[dragSrcInfo.day].splice(dragSrcInfo.item, 1);
+        escalaPorDia[targetDayIndex].push(item);
+        dragSrcInfo = null; renderEscala();
+    }
+    function handleDragEnd(e) { e.target.style.opacity = '1'; }
+
+    function renderEscala() {
+        const container = document.getElementById('escala-result');
+        const datas = Array.from(document.querySelectorAll('.data-input')).map(i => i.value);
+        const exportContainer = document.getElementById('escala-grid-export');
+        
+        container.innerHTML = '';
+        exportContainer.innerHTML = '';
+
+        escalaPorDia.forEach((itens, dIndex) => {
+            const dataF = datas[dIndex] ? new Date(datas[dIndex] + 'T00:00:00').toLocaleDateString('pt-BR') : `Data ${dIndex + 1}`;
+            
+            // TELA
+            let htmlTela = `<div class="dia-bloco" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${dIndex})"><div class="dia-titulo">📅 ${dataF} (${itens.length} itens)</div>`;
+            itens.forEach((item, iIndex) => {
+                htmlTela += `<div class="item-escala" draggable="true" ondragstart="handleDragStart(event, ${dIndex}, ${iIndex})" ondragend="handleDragEnd(event)"><span style="font-weight:600;">${item.label}</span><select class="select-edit" onchange="escalaPorDia[${dIndex}][${iIndex}].residente=this.value; renderBalanceamento();">${residentes.map(r => `<option value="${r}" ${r===item.residente?'selected':''}>${r}</option>`).join('')}</select></div>`;
+            });
+            container.innerHTML += htmlTela + `</div>`;
+
+            // EXPORT
+            let htmlExport = `<div class="dia-export"><div class="dia-header-export">📅 ${dataF}</div>`;
+            itens.forEach(item => htmlExport += `<div class="item-export"><span>${item.label}</span><strong>${item.residente}</strong></div>`);
+            exportContainer.innerHTML += htmlExport + `</div>`;
+        });
+    }
+
+    function renderBalanceamento() {
+        const stats = {}; residentes.forEach(r => stats[r] = { caso: 0, teor: 0 });
+        escalaPorDia.flat().forEach(item => { if(stats[item.residente]) stats[item.residente][item.tipo]++; });
+        const max = Math.max(...residentes.map(r => stats[r].caso + stats[r].teor), 1);
+        
+        // SIDEBAR
+        document.getElementById('balanceamento-sidebar').innerHTML = residentes.map(r => `
+            <div class="stat-card-picq sidebar-stat" style="background:rgba(255,255,255,0.1); color:white;">
+                <strong>${r}</strong>: ${stats[r].caso} Casos / ${stats[r].teor} Questões
+                <div class="stat-bar-container"><div class="stat-mini-bar"><div class="stat-fill-casos" style="width:${(stats[r].caso/max)*100}%"></div></div><div class="stat-mini-bar"><div class="stat-fill-teor" style="width:${(stats[r].teor/max)*100}%"></div></div></div>
+            </div>`).join('');
+            
+        // EXPORT
+        document.getElementById('balanceamento-export').innerHTML = residentes.map(r => `
+            <div class="stat-card-export">
+                <strong style="font-size:1.1rem; color:#2c3e50;">${r}</strong><div style="font-size:0.9rem; margin-top:5px; color:#555;">${stats[r].caso} Casos / ${stats[r].teor} Questões</div><div class="stat-bar-container" style="margin-top:8px;"><div class="stat-mini-bar" style="background:#ddd;"><div class="stat-fill-casos" style="width:${(stats[r].caso/max)*100}%"></div></div><div class="stat-mini-bar" style="background:#ddd;"><div class="stat-fill-teor" style="width:${(stats[r].teor/max)*100}%"></div></div></div>
+            </div>`).join('');
+    }
+
+    function renderRelatorio() {
+        const box = document.getElementById('capture-report');
+        const ids = Object.keys(excluidas).sort();
+        box.style.display = ids.length > 0 ? 'block' : 'none';
+        
+        document.getElementById('lista-exclusoes').innerHTML = ids.map(id => {
+            const p = id.split('-'); const meta = configTipos[p[0]];
+            const instDestino = (meta.i === 'HUOL') ? 'LIGA' : 'HUOL';
+            const tipoDestino = (meta.l === 'Caso') ? 'CASO' : 'QUESTÃO';
+            const ed = excluidas[id].ed || "???";
+            const q = excluidas[id].q || "?";
+            
+            return `
+            <div class="report-item">
+                <span class="report-q">${meta.l} ${p[1]} ${meta.i}:</span>
+                <span>Igual a(o) <strong>${tipoDestino} ${q} ${instDestino} - PICQ ${ed}</strong></span>
+            </div>`;
+        }).join('');
+    }
+
+    function gerarCamposDatas() {
+        const n = document.getElementById('num-datas').value;
+        const container = document.getElementById('campos-datas');
+        container.innerHTML = '';
+        for(let i=1; i<=n; i++) {
+            const input = document.createElement('input'); input.type = 'date'; input.className = 'data-input'; input.style.marginTop = '5px'; 
+            input.onchange = renderEscala; 
+            container.appendChild(input);
+        }
+    }
+
+    async function copiarImagem(id) {
+        const area = document.getElementById(id);
+        const originalDisplay = area.style.display;
+        area.style.display = 'block'; 
+        const canvas = await html2canvas(area, { backgroundColor: '#ffffff', scale: 2 });
+        canvas.toBlob(async (blob) => { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); alert("✅ Imagem copiada!"); });
+        area.style.display = originalDisplay; 
+    }
+
+    init();
+</script>
+</body>
+</html>
