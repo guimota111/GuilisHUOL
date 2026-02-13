@@ -3,28 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistemas Patologia - HUOL</title>
+    <title>GUILIS - Sistemas Patologia HUOL</title>
     <style>
+        :root {
+            --primary: #4a66b4;
+            --secondary: #27ae60;
+            --purple: #8e44ad;
+            --orange: #e67e22;
+            --text: #2c3e50;
+            --bg: #f0f2f5;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
-            background-color: #f0f2f5;
-            color: #2c3e50;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 40px 20px;
         }
 
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 3.5rem;
+            margin-bottom: 5px;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-top: 0;
+        }
+
+        /* CATEGORIAS */
+        .section-title {
+            width: 100%;
+            max-width: 1100px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+            color: #555;
+            text-transform: uppercase;
             letter-spacing: 1px;
         }
 
@@ -32,54 +62,73 @@
             display: flex;
             gap: 25px;
             flex-wrap: wrap;
-            justify-content: center;
-            max-width: 800px;
+            justify-content: flex-start;
+            max-width: 1100px;
+            width: 100%;
         }
 
+        /* CARD STYLE */
         .card {
             background: white;
-            width: 280px;
+            width: 240px;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             text-align: center;
             text-decoration: none;
             color: inherit;
-            transition: transform 0.3s, box-shadow 0.3s;
-            border-top: 6px solid #4a66b4;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-top: 8px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
         }
 
         .card h2 {
-            margin-top: 0;
-            color: #4a66b4;
-            font-size: 1.5rem;
+            margin: 15px 0 10px 0;
+            font-size: 1.3rem;
+            color: var(--text);
         }
 
         .card p {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: #666;
-            line-height: 1.4;
+            line-height: 1.5;
+            margin: 0;
         }
 
         .icon {
             font-size: 3rem;
-            margin-bottom: 15px;
             display: block;
         }
 
-        /* Cores específicas para diferenciar */
-        .card-ihq { border-top-color: #27ae60; }
-        .card-ihq h2 { color: #27ae60; }
+        /* Cores das Categorias */
+        .category-escalas .card { border-top-color: var(--primary); }
+        .category-apoio .card { border-top-color: var(--secondary); }
+        
+        /* Ajustes de cores individuais nos títulos se quiser */
+        .card-biopsia h2 { color: var(--purple); }
+        .card-biopsia { border-top-color: var(--purple) !important; }
+        
+        .card-dermato h2 { color: var(--orange); }
+        .card-dermato { border-top-color: var(--orange) !important; }
 
         footer {
-            margin-top: 50px;
-            font-size: 0.85rem;
-            color: #888;
+            margin-top: auto;
+            padding-top: 60px;
+            font-size: 0.9rem;
+            color: #95a5a6;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container { justify-content: center; }
+            .section-title { text-align: center; }
         }
     </style>
 </head>
@@ -87,25 +136,45 @@
 
     <header>
         <h1>GUILIS</h1>
-        <p>Sistemas de Apoio à Patologia - HUOL</p>
+        <p>Plataforma de Gestão - Patologia HUOL</p>
     </header>
 
-    <div class="container">
+    <div class="section-title">📅 Escalas e Fluxo</div>
+    <div class="container category-escalas">
+        
         <a href="./Escala/index.html" class="card">
-            <span class="icon">📅</span>
+            <span class="icon">🗓️</span>
             <h2>Escala Mensal</h2>
-            <p>Gerenciamento e balanceamento da escala de residentes de Patologia.</p>
+            <p>Balanceamento de residentes em Macro, Micro e Congelação.</p>
         </a>
 
-        <a href="./TabelaIHQ/index.html" class="card card-ihq">
+        <a href="./escalaBiopsiaEcitologia/index.html" class="card card-biopsia">
             <span class="icon">🔬</span>
-            <h2>Tabela IHQ</h2>
-            <p>Consulta e organização de protocolos de Imuno-histoquímica.</p>
+            <h2>Biópsias & Cito</h2>
+            <p>Gestão de cotas diárias e ordem de distribuição de casos.</p>
         </a>
+
+        <a href="./escalaDermato/index.html" class="card card-dermato">
+            <span class="icon">🩺</span>
+            <h2>Dermato</h2>
+            <p>Escala dedicada para o setor de Dermatopatologia.</p>
+        </a>
+
     </div>
 
+    <div class="section-title">📋 Apoio ao Laudo</div>
+    <div class="container category-apoio">
+        
+        <a href="./TabelaIHQ/index.html" class="card">
+            <span class="icon">🧬</span>
+            <h2>Tabela IHQ</h2>
+            <p>Painéis de anticorpos, marcadores e protocolos diagnósticos.</p>
+        </a>
+
+        </div>
+
     <footer>
-        Desenvolvido por Guilherme &copy; 2026
+        Desenvolvido por Guilherme &copy; 2026 | Residência Médica em Patologia - HUOL
     </footer>
 
 </body>
