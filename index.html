@@ -2,507 +2,301 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUILIS - v8.3 (Tabela Fixada)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>GUILIS - Gestão de Escala Patologia</title>
     <style>
-        .erro-input { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
-        .msg-erro { color: #ef4444; font-size: 10px; display: none; position: absolute; bottom: -14px; left: 2px; }
-        #modalPaineis { display: none; }
-        .lista-scroll { overflow-y: auto; max-height: 400px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #ffffff; }
+        :root {
+            --primary: #4a66b4;
+            --header-tabela: #c0dbd5;
+            --cor-cong: #7c8ee9;
+            --cor-micro: #81c784;
+            --cor-macro: #ffd54f;
+        }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: #f0f0f0; }
         
-        /* Estilos do Preview */
-        .laudo-preview { font-family: 'Times New Roman', serif; color: black; line-height: 1.1; }
-        .laudo-texto { margin-top: 15px; font-size: 11pt; text-align: justify; }
-        .laudo-ref { margin-top: 20px; font-size: 9pt; color: #444; border-top: 1px solid #ccc; padding-top: 5px; }
+        #sidebar { 
+            width: 320px; background: #2c3e50; color: white; padding: 20px; 
+            height: 100vh; position: sticky; top: 0; overflow-y: auto; box-sizing: border-box;
+        }
+
+        #main-content { flex: 1; padding: 15px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        .semana-bloco { margin-bottom: 4px; border: 1.2px solid #000; page-break-inside: avoid; }
+        .semana-header { background-color: var(--primary) !important; color: white !important; padding: 2px 10px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #000; padding: 1px; text-align: center; font-size: 0.7rem; vertical-align: middle; position: relative; }
+        th { background-color: var(--header-tabela) !important; height: 18px; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold; }
+        .cargo-col { width: 90px; font-weight: bold; text-align: left; padding-left: 5px; background: #dfd8d8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        .cong-row { height: 25px; background-color: var(--cor-cong) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .micro-row { height: 50px; background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .macro-row { height: 50px; background-color: #fff9c4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        .celula-edit { min-height: 20px; cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; }
+        .badge-nome { background: rgba(0,0,0,0.15); padding: 2px 4px; border-radius: 3px; font-size: 0.65rem; border: 0.5px solid rgba(0,0,0,0.2); font-weight: 500; }
+        .cong-row .badge-nome { background: white; color: #000; font-weight: bold; }
+
+        /* DASHBOARD */
+        .stat-card { background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .stat-card strong { display: block; margin-bottom: 6px; font-size: 0.85rem; border-bottom: 1px solid #555; padding-bottom: 2px; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 4px; font-size: 0.7rem; }
+        .stat-label { width: 45px; }
+        .stat-bar-bg { flex: 1; height: 7px; background: #222; border-radius: 4px; overflow: hidden; margin: 0 8px; }
+        .stat-bar-fill { height: 100%; transition: width 0.3s; }
+        .stat-count { width: 15px; text-align: right; font-weight: bold; }
+
+        .fill-cong { background-color: var(--cor-cong); }
+        .fill-micro { background-color: var(--cor-micro); }
+        .fill-macro { background-color: var(--cor-macro); }
+
+        input, button { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: none; box-sizing: border-box; }
+        .btn-add { background: #27ae60; color: white; cursor: pointer; font-weight: bold; }
+        .btn-print { background: #e67e22; color: white; cursor: pointer; font-weight: bold; margin-top: 15px; font-size: 1rem; }
+        
+        #residente-menu { position: absolute; background: white; border: 1px solid #000; z-index: 100; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); width: 160px; border-radius: 4px; overflow: hidden; }
+        .menu-item { padding: 10px; color: black; text-align: left; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        .menu-item:hover { background: #f0f0f0; }
+
+        @media print {
+            #sidebar { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; }
+            @page { margin: 0.4cm; size: A4 portrait; }
+        }
     </style>
 </head>
-<body class="bg-gray-100 p-8">
+<body>
 
-    <datalist id="lista-anticorpos-estoque"></datalist>
-
-    <div class="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div class="bg-white p-6 rounded shadow-md border-t-4 border-blue-600">
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-800 italic uppercase">GUILIS</h2>
-                    <p class="text-gray-500 text-sm font-medium">HUOL • NATAL/RN</p>
-                </div>
-                <button onclick="abrirModal()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded text-xs font-bold hover:bg-gray-200 border">
-                    📋 VER PROTOCOLOS
-                </button>
-            </div>
-
-            <div class="mb-6 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1">1. Tabela de Anticorpos:</label>
-                <select id="select-paineis-ui" onchange="aplicarPainel(this.value); this.value='';" class="w-full border-2 border-blue-200 p-2 rounded text-sm bg-white font-bold text-blue-800 outline-none focus:border-blue-500">
-                </select>
-            </div>
-            
-            <div id="container-inputs" class="space-y-1"></div>
-            
-            <div class="mt-4 flex gap-2">
-                <button onclick="adicionarLinha()" class="bg-gray-200 text-gray-700 py-1 px-4 rounded font-bold hover:bg-gray-300 transition-all flex-1 text-xs">+ LINHA</button>
-                <button onclick="limparTabela()" class="bg-red-50 text-red-600 py-1 px-4 rounded font-bold hover:bg-red-100 transition-all flex-1 text-xs border border-red-100">LIMPAR TELA</button>
-            </div>
-
-            <hr class="my-6 border-gray-200">
-
-            <div class="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <label class="block text-[10px] font-bold text-indigo-700 uppercase mb-2">2. Gerador de Conclusão:</label>
-                
-                <select id="select-modelo-conclusao" onchange="carregarInputsConclusao()" class="w-full border-2 border-indigo-200 p-2 rounded text-sm bg-white font-bold text-indigo-900 outline-none mb-3">
-                    <option value="">(Opcional) Selecione um modelo...</option>
-                    <option value="endometrio">Carcinoma de Endométrio (OMS 2020)</option>
-                    <option value="generico">Genérico / Texto Livre</option>
-                </select>
-
-                <div id="inputs-dinamicos-conclusao" class="space-y-3"></div>
-            </div>
-
-            <button onclick="copiarCompleto()" class="w-full bg-orange-600 text-white font-black py-4 rounded shadow-xl active:scale-95 transition-all text-lg uppercase tracking-widest mt-2">
-                COPIAR TUDO PARA O WORD
-            </button>
-        </div>
-
-        <div class="bg-white p-8 rounded shadow-md w-[800px] mx-auto overflow-hidden">
-            <h2 class="text-xl font-bold mb-6 text-gray-400 border-b pb-2 text-center text-xs uppercase tracking-[0.3em]">Visualização</h2>
-            
-            <div id="documento-final" class="laudo-preview">
-                <div id="area-tabela" class="flex justify-center mb-6"></div>
-                <div id="area-conclusao"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalPaineis" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div class="p-5 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="text-lg font-bold text-gray-800 uppercase">Protocolos</h3>
-                <button onclick="fecharModal()" class="text-gray-400 hover:text-red-500 text-3xl">&times;</button>
-            </div>
-            <div class="p-6">
-                <div class="lista-scroll" id="listaPaineisVisual"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-    // ==========================================
-    // 1. CONFIGURAÇÃO DE LAUDOS (CONCLUSÃO)
-    // ==========================================
-    const modelosConclusao = {
-        "endometrio": {
-            titulo: "Carcinoma de Endométrio",
-            campos: [
-                {
-                    label: "Diagnóstico (OMS 2020):",
-                    opcoes: [
-                        "Carcinoma endometrioide de alto grau, SOE",
-                        "Carcinoma endometrioide de baixo grau, SOE",
-                        "Carcinoma mucinoso",
-                        "Carcinoma seroso",
-                        "Carcinoma de células claras",
-                        "Carcinossarcoma",
-                        "Carcinoma endometrial misto"
-                    ]
-                },
-                {
-                    label: "Expressão de P53:",
-                    opcoes: [
-                        "expressão normal",
-                        "expressão nuclear anormal",
-                        "expressão citoplasmática anormal",
-                        "ausência de expressão"
-                    ]
-                },
-                {
-                    label: "Status de MMR (Reparo DNA):",
-                    opcoes: [
-                        "expressão preservada das proteínas dos genes de reparo do DNA",
-                        "perda de expressão das proteínas dos genes MLH-1 e PMS-2",
-                        "perda de expressão das proteínas dos genes MSH-2 e MSH-6",
-                        "perda de expressão da proteína do gene PMS-2",
-                        "perda de expressão da proteína do gene MSH-6"
-                    ]
-                }
-            ],
-            gerarTexto: (vals) => `<b>CONCLUSÃO</b><br>O perfil imuno-histoquímico, associado aos achados morfológicos, corrobora o diagnóstico de <b>${vals[0]}</b> - OMS 2020, com <b>${vals[1]}</b> do gene P53 e <b>${vals[2]}</b>.`,
-            textoFixo: `
-                <br><br>
-                <b>Interpretação imuno-histoquímica da expressão do P53</b><br>
-                <b>Expressão normal (fenótipo selvagem):</b> positividade nuclear de intensidade variável em até 5% das células neoplásicas.<br>
-                <b>Expressão anormal nuclear (mutação "missense"):</b> positividade nuclear de intensidade forte e difusa em mais de 80% das células neoplásicas.<br>
-                <b>Expressão anormal citoplasmática (mutação com perda de função e quebra do domínio nuclear):</b> positividade citoplasmática inequívoca acompanhada de positividade nuclear de intensidade variável nas células neoplásicas.<br>
-                <b>Expressão negativa (fenótipo "null" - mutação com perda de função):</b> ausência completa de expressão nas células neoplásicas.
-                <br><br>
-                <b>Interpretação imuno-histoquímica da expressão das proteínas dos genes de reparo do DNA</b><br>
-                <b>Imuno-histoquímica sugere status MSS:**</b><br>MLH1(+) PMS2(+) MSH2(+) MSH6(+)<br><br>
-                <b>Imuno-histoquímica sugere status MSI*. Necessário pesquisa de metilação da região promotora de MLH1:</b><br>MLH1(-) PMS2(-) MSH2(+) MSH6(+)<br><br>
-                <b>Imuno-histoquímica sugere status MSI*. Alta probabilidade de síndrome de Lynch:</b><br>MLH1(+) PMS2(+) MSH2(-) MSH6(-)<br><br>
-                <b>Imuno-histoquímica sugere status MSI*. Alta probabilidade de síndrome de Lynch:</b><br>MLH1(+) PMS2(+) MSH2(+) MSH6(-)<br><br>
-                <b>Imunohistoquímica sugere status MSI*. Alta probabilidade de síndrome de Lynch:</b><br>MLH1(+) PMS2(-) MSH2(+) MSH6(-)<br><br>
-                *MSI: Alta probabilidade de instabilidade de microssatélites **MSS: Estabilidade de microssatélites
-                <div class="laudo-ref">
-                Referências bibliográficas:<br>
-                1. Köbel M, Ronnett BM, Singh N, Soslow RA, Gilks CB, McCluggage WG. Interpretation of P53 Immunohistochemistry in Endometrial Carcinomas. Int J Gynecol Pathol. 2019.<br>
-                2. Köbel M, Kang EY. The Many Uses of p53 Immunohistochemistry in Gynecological Pathology. Int J Gynecol Pathol. 2021.<br>
-                3. Fitzgibbons PL, et al. Template for Reporting Results of Biomarker Testing of Specimens From Patients With Carcinoma of the Endometrium. CAP, 2019.
-                </div>
-            `
-        },
-        "generico": {
-            titulo: "Conclusão Livre",
-            campos: [],
-            gerarTexto: () => document.getElementById('txt-conclusao-livre').value.replace(/\n/g, "<br>"),
-            textoFixo: ""
-        }
-    };
-
-    function carregarInputsConclusao() {
-        const modeloKey = document.getElementById('select-modelo-conclusao').value;
-        const divInputs = document.getElementById('inputs-dinamicos-conclusao');
-        divInputs.innerHTML = '';
-        if (!modeloKey) {
-            document.getElementById('area-conclusao').innerHTML = '';
-            return;
-        }
-        if (modeloKey === 'generico') {
-            divInputs.innerHTML = `<textarea id="txt-conclusao-livre" rows="4" class="w-full border p-2 text-sm rounded" placeholder="Digite a conclusão aqui..." oninput="atualizarPreviewConclusao()"></textarea>`;
-            return;
-        }
-        const modelo = modelosConclusao[modeloKey];
-        let htmlBuilder = "";
-        modelo.campos.forEach((campo, idx) => {
-            htmlBuilder += `<div class="flex flex-col">
-                <label class="text-[10px] font-bold text-gray-500 uppercase mb-1">${campo.label}</label>
-                <select id="conclusao-inp-${idx}" onchange="atualizarPreviewConclusao()" class="w-full border border-gray-300 p-2 text-sm rounded bg-white focus:border-indigo-500 outline-none">`;
-            campo.opcoes.forEach(op => {
-                htmlBuilder += `<option value="${op}">${op}</option>`;
-            });
-            htmlBuilder += `</select></div>`;
-        });
-        divInputs.innerHTML = htmlBuilder;
-        atualizarPreviewConclusao(); 
-    }
-
-    function atualizarPreviewConclusao() {
-        const modeloKey = document.getElementById('select-modelo-conclusao').value;
-        const areaPreview = document.getElementById('area-conclusao');
-        if (!modeloKey) {
-            areaPreview.innerHTML = '';
-            return;
-        }
-        const modelo = modelosConclusao[modeloKey];
-        let htmlFinal = "";
-        if (modeloKey === 'generico') {
-            const txt = document.getElementById('txt-conclusao-livre');
-            if(txt) htmlFinal = `<div class="laudo-texto"><b>CONCLUSÃO</b><br>` + txt.value.replace(/\n/g, "<br>") + `</div>`;
-        } else {
-            const vals = [];
-            modelo.campos.forEach((_, idx) => {
-                const el = document.getElementById(`conclusao-inp-${idx}`);
-                if(el) vals.push(el.value);
-            });
-            if(vals.length === modelo.campos.length) {
-                htmlFinal = `<div class="laudo-texto">` + modelo.gerarTexto(vals) + `</div>`;
-                htmlFinal += modelo.textoFixo;
-            }
-        }
-        areaPreview.innerHTML = htmlFinal;
-    }
-
-    // ==========================================
-    // 2. ESTOQUE DE ANTICORPOS
-    // ==========================================
-    const estoqueIHQ = {
-        "AML (actina músculo liso)": ["1A4 - Agilent", "1A4 - Cell Marque"],
-        "Alfafetoproteína": ["Policlonal - Cell Marque"],
-        "Anidrase carbônica IX (CA IX)": ["EP161 - Cell Marque"],
-        "ALK1": ["ALK1 – Agilent", "ALK01 - Ventana"],
-        "ALK (D5F3)": ["D5F3 - Ventana"],
-        "BCOR": ["C-10 - Zeta"],
-        "BCL-2": ["124 – Agilent", "124 - Ventana"],
-        "BCL-6": ["PG-B6p – Agilent", "GL191E/A8 - Cell Marque"],
-        "BER-EP4": ["Agilent", "Ber-EP4 - Cell Marque"],
-        "Beta-Catenina": ["β-Catenin-1 – Agilent", "Policlonal - Cell Marque", "14 - Cell Marque"],
-        "Beta-HCG": ["Policlonal - Cell Marque"],
-        "c-KIT (CD117)": ["EP10 - Ventana"],
-        "c-MYC": ["Ventana", "Y69 - Ventana"],
-        "CA125": ["Agilent", "M11 - Agilent", "OC125 - Cell Marque"],
-        "CA19.9": ["121SLE - Cell Marque"],
-        "Calcitonina": ["SP17 - Cell Marque"],
-        "Caldesmon": ["h-CD – Agilent", "E89 - Cell Marque"],
-        "Calponina": ["EP798Y - Cell Marque"],
-        "Calretinina": ["DAK-Calret 1 – Agilent", "SP65 - Ventana"],
-        "Carcinoembrionário (CEA)": ["II-7 – Agilent", "CEA31 - Cell Marque"],
-        "CD1a": ["010 – Agilent", "EP3622 - Cell Marque"],
-        "CD2": ["AB75 – Agilent", "MRQ-11 - Cell Marque"],
-        "CD3": ["policlonal – Agilent", "2GV6 - Ventana"],
-        "CD4": ["4B12 – Agilent", "SP35 - Ventana"],
-        "CD5": ["4C7 – Agilent", "SP19 - Ventana"],
-        "CD7": ["CBC.37 – Agilent", "SP94 - Ventana"],
-        "CD8": ["C8/144B – Agilent", "SP57 - Ventana"],
-        "CD10": ["DAK-CD10 – Agilent", "SP67 - Ventana"],
-        "CD15": ["Carb-3 – Agilent", "MMA - Ventana"],
-        "CD20": ["L26 – Agilent", "L26 - Ventana"],
-        "CD21": ["1F8 – Agilent"],
-        "CD23": ["DAK-CD23 – Agilent", "SP23 - Ventana"],
-        "CD30": ["Ber-H2 – Agilent", "Ber-H2 - Ventana"],
-        "CD31": ["JC70A – Agilent", "JC70 - Cell Marque"],
-        "CD34": ["QBEnd 10 – Agilent", "QBEnd/10 - Ventana"],
-        "CD43": ["DF-T1 – Agilent", "L60 - Ventana"],
-        "CD45": ["2B11 + PD7/26 – Agilent", "2B11 & PD7/26 - Cell Marque"],
-        "CD56": ["123C3 – Agilent", "MRQ-42 - Cell Marque"],
-        "CD57": ["NK1 - Cell Marque"],
-        "CD61": ["2f2 - Cell Marque"],
-        "CD68": ["KP1 – Agilent", "KP1 - Ventana"],
-        "CD79a": ["JCB117 – Agilent", "SP18 - Ventana"],
-        "CD99": ["12E7 - Agilent", "O13 - Ventana"],
-        "CD138": ["MI15 - Agilent", "B-A38 - Cell Marque"],
-        "CDK4": ["EP180 - BIOSB"],
-        "CDX2": ["DAK-CDX2 - Agilent", "EPR2764Y - Cell Marque"],
-        "CEA monoclonal": ["CEA31 - Cell Marque"],
-        "Ciclina D1": ["EP12 - Agilent", "SP4-R - Ventana"],
-        "AE1/AE3 (CK pan)": ["AE1/AE3/PCK26 - Ventana"],
-        "CAM5.2": ["CAM5.2 - Ventana"],
-        "CK 5/6": ["D5/16 B4 - Agilent", "D5/16B4 - Ventana"],
-        "CK 7": ["OV-TL 12/30 - Agilent", "SP52 - Ventana"],
-        "CK 8/18": ["EP17/30 - Agilent", "B22.1 & B23.1 - Cell Marque"],
-        "CK 19": ["RCK108 - Agilent", "A53-B/A2.26 - Cell Marque"],
-        "CK 20": ["Ks20.8 - Agilent", "SP33 - Ventana"],
-        "34βE12": ["34βE12 - Agilent", "34B12 - Ventana"],
-        "Cromogranina A": ["LK2H10 - Ventana"],
-        "DBA44": ["AB779 - Abcam"],
-        "Desmina": ["D33 - Agilent", "DE-R-11 - Ventana"],
-        "DOG1": ["SP31 - Cell Marque"],
-        "E-Caderina": ["NCH-38 - Agilent", "36 - Ventana"],
-        "EMA": ["E29 - Agilent", "E29 - Ventana"],
-        "ERG": ["EPR3864 - Ventana"],
-        "Fator von Willebrand": ["Policlonal - Agilent"],
-        "Fator VIII": ["Policlonal - Cell Marque"],
-        "Fator XIIIa": ["AC-1A1 - Cell Marque"],
-        "FLI-1": ["MRQ-1 - Cell Marque"],
-        "GATA-3": ["L50-823 - Cell Marque"],
-        "GFAP": ["Policlonal - Agilent", "EP672Y - Cell Marque"],
-        "Glutamina Sintetase": ["GS6 - Cell Marque"],
-        "Glypican-3": ["1G12 - Cell Marque"],
-        "H3.3G34W": ["RM263 - RevMAb"],
-        "H3K27me3": ["3C36B11 - Cell Marque"],
-        "H3K36M": ["RM193 - RevMAb"],
-        "Hepatocyte": ["OCH1E5 - Agilent", "OCH1E5 - Cell Marque"],
-        "HER2": ["4B5 - Ventana"],
-        "HHV8": ["13B10 - Cell Marque"],
-        "INI-1": ["MRQ-27 - Cell Marque"],
-        "Inibina": ["R1 - Agilent"],
-        "Kappa": ["Policlonal - Agilent", "Policlonal - Ventana"],
-        "Ki-67": ["MIB1 - Agilent", "30-9 - Ventana"],
-        "Lambda": ["Policlonal - Agilent", "Policlonal - Ventana"],
-        "LEF1": ["EP310 - Cell Marque"],
-        "Melan-A": ["A103 - Agilent", "A103 - Ventana"],
-        "Melanossomo (HMB45)": ["HMB45 - Agilent", "HMB45 - Ventana"],
-        "MDM2": ["IF2 - Cell Marque"],
-        "Mesothelial Cells (HBME-1)": ["HBME-1 - Cell Marque"],
-        "MLH1": ["ES05 - Agilent", "M1 - Ventana"],
-        "MSH2": ["FE11 - Agilent", "G219-1129 - Ventana"],
-        "MSH6": ["EP49 - Agilent", "EP49 - Ventana"],
-        "PMS2": ["EP51 - Agilent", "A16-4 - Ventana"],
-        "MUM1": ["MUM1p - Agilent", "MRQ-43 - Cell Marque"],
-        "Mieloperoxidase": ["Policlonal - Agilent", "Policlonal - Cell Marque"],
-        "Miogenina": ["F5D - Agilent", "F5D - Cell Marque"],
-        "MyoD1": ["EP212 - Cell Marque"],
-        "Napsina A": ["MRQ-60 - Cell Marque"],
-        "NKX2.2": ["EP336 - Cell Marque"],
-        "NKX3.1": ["EP356 - Cell Marque"],
-        "Oct-2": ["MRQ-2 - Cell Marque"],
-        "OCT3/4": ["N1NK - Agilent", "MRQ-10 - Cell Marque"],
-        "p16": ["E6H4 - Ventana"],
-        "p40": ["DAK-p40 - Agilent", "BC28 - Ventana"],
-        "p53": ["DO-7 - Agilent", "DO-7 - Cell Marque"],
-        "p63": ["DAK-p63 - Agilent", "4A4 - Ventana"],
-        "PAX-5": ["DAK-Pax5 - Agilent", "SP34 - Ventana"],
-        "PAX-8": ["MRQ-50 - Cell Marque"],
-        "PD-L1": ["22C3 - Dako", "SP243 - Ventana", "SP152 - Ventana"],
-        "PLAP": ["8A9 - Agilent", "NB10 - Cell Marque"],
-        "Podoplanina (D2-40)": ["D2-40 - Cell Marque"],
-        "PSA": ["3E6 - Agilent", "Policlonal - Ventana"],
-        "PSAP": ["PASE/4LI - Cell Marque"],
-        "Racemase": ["13H4 - Agilent", "SP116 - Ventana"],
-        "RA": ["SP107 - Cell Marque"],
-        "RE": ["EP1 - Agilent", "SP1 - Ventana"],
-        "RP": ["PgR 636 - Agilent", "1E2 - Ventana"],
-        "ROS1": ["SP384 - Ventana"],
-        "S100": ["Policlonal - Agilent", "4C4.9 - Ventana"],
-        "SALL-4": ["6E3 - Cell Marque"],
-        "SATB2": ["EP281 - Cell Marque"],
-        "SF-1": ["EP434 - Cell Marque"],
-        "Sinaptofisina": ["DAK-SYNAP - Agilent", "MRQ-40 - Cell Marque"],
-        "SOX-10": ["EP268 - Cell Marque"],
-        "SOX-11": ["MRQ-58 - Cell Marque"],
-        "STAT6": ["EP325 - Cell Marque"],
-        "TBX21": ["EP263 - Cell Marque"],
-        "TDT": ["EP266 - Agilent", "Policlonal - Cell Marque"],
-        "TFE3": ["MRQ-37 - Cell Marque"],
-        "Tireoglobulina": ["Policlonal - Agilent", "2H11 + 6E1 - Cell Marque"],
-        "TLE-1": ["1F5 - Cell Marque"],
-        "TTF-1": ["8G7G3/1 - Agilent", "8G7G3/1 - Ventana"],
-        "Uroplaquina": ["SP73 - Cell Marque"],
-        "Vimentina": ["V9 - Ventana"],
-        "WT-1": ["6FH2 - Agilent", "6F-H2 - Cell Marque"]
-    };
-
-
-    // ==========================================
-    // 3. PAINÉIS PADRONIZADOS
-    // ==========================================
-    const paineisPadrao = {
-        "MAMA": ["RE", "RP", "Ki-67", "HER2"],
-        "MMR (Instabilidade)": ["MLH1", "MSH2", "MSH6", "PMS2"],
-        "ENDOMÉTRIO" : ["MLH1", "MSH2", "MSH6", "PMS2", "p53"],
-        "PULMÃO (Adeno)": ["TTF-1", "p63"],
-        "PROSTATA": ["34βE12", "p63", "Racemase"]
-    };
-
-
-    // ==========================================
-    // 4. LÓGICA DO SISTEMA
-    // ==========================================
+<div id="sidebar">
+    <h3 style="margin-top:0">GUILIS - Escala</h3>
+    <label style="font-size: 0.8rem;">Mês de Referência:</label>
+    <input type="month" id="mes-selecionado" value="2026-02">
     
-    function popularDatalist(t) {
-        const dl = document.getElementById('lista-anticorpos-estoque');
-        dl.innerHTML = '';
-        Object.keys(estoqueIHQ).sort().filter(k => k.toLowerCase().includes(t.toLowerCase())).forEach(k => {
-            const opt = document.createElement('option');
-            opt.value = k;
-            dl.appendChild(opt);
-        });
+    <hr style="opacity:0.2">
+    <h4>Residentes</h4>
+    <div id="lista-cadastro"></div>
+    <input type="text" id="novo-residente" placeholder="Novo residente...">
+    <button class="btn-add" onclick="addResidente()">ADICIONAR</button>
+
+    <hr style="opacity:0.2">
+    <h4>Estatísticas de Justiça</h4>
+    <div id="stats-container"></div>
+
+    <button class="btn-print" onclick="window.print()">IMPRIMIR ESCALA</button>
+</div>
+
+<div id="main-content">
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 5px;">
+            <h2 style="margin: 0; font-size: 1.1rem; letter-spacing: 1px;">ESCALA DE RESIDENTES - HUOL</h2>
+            <span id="label-mes" style="font-weight: bold; text-transform: uppercase; font-size: 0.9rem; color: #444;"></span>
+        </div>
+        <div id="lista-semanas"></div>
+    </div>
+</div>
+
+<div id="residente-menu"></div>
+
+<script>
+    // Lista inicial conforme solicitado
+    const residentesPadrao = ["Luana", "Liana", "Lucas", "Henrique", "Renato", "David", "Rafael"];
+    
+    let residentes = JSON.parse(localStorage.getItem('guilis_residentes')) || residentesPadrao;
+    let escalaData = JSON.parse(localStorage.getItem('guilis_escala')) || {};
+    let celulaAtiva = null;
+
+    const inputData = document.getElementById('mes-selecionado');
+    const menu = document.getElementById('residente-menu');
+
+    function save() {
+        localStorage.setItem('guilis_residentes', JSON.stringify(residentes));
+        localStorage.setItem('guilis_escala', JSON.stringify(escalaData));
     }
 
-    function atualizarSelectPaineis() {
-        const select = document.getElementById('select-paineis-ui');
-        select.innerHTML = '<option value="">Selecione um painel para carregar...</option>';
-        Object.keys(paineisPadrao).sort().forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p;
-            opt.innerText = p.toUpperCase();
-            select.appendChild(opt);
-        });
+    function init() {
+        renderResidentes();
+        gerarEscala();
     }
 
-    function aplicarPainel(id) {
-        if(!id || !paineisPadrao[id]) return;
-        const lista = paineisPadrao[id];
-        const linhas = document.querySelectorAll('.linha-input');
-        let pIdx = 0;
-        for(let i = 0; i < linhas.length && pIdx < lista.length; i++) {
-            const input = linhas[i].querySelector('.ant');
-            if(input.value === "") { 
-                input.value = lista[pIdx]; 
-                processarInput(i, input); 
-                pIdx++; 
+    function addResidente() {
+        const input = document.getElementById('novo-residente');
+        if(input.value) {
+            residentes.push(input.value);
+            input.value = '';
+            renderResidentes();
+            atualizarStats();
+            save();
+        }
+    }
+
+    function renderResidentes() {
+        const lista = document.getElementById('lista-cadastro');
+        lista.innerHTML = residentes.map((r, i) => `
+            <div style="display:flex; align-items:center; margin-bottom:6px; background:#34495e; padding:4px 8px; border-radius:4px;">
+                <span style="flex:1; font-size:0.9rem;">${r}</span>
+                <span onclick="removerResidente(${i})" style="cursor:pointer; color:#e74c3c; font-weight:bold; padding:0 5px;">×</span>
+            </div>
+        `).join('');
+    }
+
+    function removerResidente(i) {
+        if(confirm('Deseja remover este residente da lista?')) {
+            residentes.splice(i,1);
+            renderResidentes();
+            atualizarStats();
+            save();
+        }
+    }
+
+    function gerarEscala() {
+        const [ano, mes] = inputData.value.split('-').map(Number);
+        const ultimoDia = new Date(ano, mes, 0).getDate();
+        document.getElementById('label-mes').innerText = new Date(ano, mes-1).toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'});
+
+        const container = document.getElementById('lista-semanas');
+        container.innerHTML = '';
+        let diasUteis = [];
+        let contadorSemana = 1;
+
+        for (let d = 1; d <= ultimoDia; d++) {
+            const data = new Date(ano, mes-1, d);
+            if (data.getDay() >= 1 && data.getDay() <= 5) {
+                diasUteis.push({dia: d, label: data.toLocaleDateString('pt-BR', {weekday:'short'}).toUpperCase().replace('.','')});
+            }
+            if (data.getDay() === 5 || d === ultimoDia) {
+                if (diasUteis.length > 0) {
+                    container.appendChild(criarTabelaSemana(contadorSemana++, diasUteis, mes));
+                    diasUteis = [];
+                }
             }
         }
-        while(pIdx < lista.length) {
-            adicionarLinha();
-            const novas = document.querySelectorAll('.linha-input');
-            const input = novas[novas.length-1].querySelector('.ant');
-            input.value = lista[pIdx]; 
-            processarInput(novas.length-1, input); 
-            pIdx++;
-        }
+
+        // Reconectar dados salvos
+        Object.keys(escalaData).forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.innerHTML = escalaData[id].map(n => `<span class="badge-nome">${n}</span>`).join('');
+            }
+        });
+        atualizarStats();
     }
 
-    function criarLinhaUI(index) {
+    function criarTabelaSemana(num, dias, mes) {
         const div = document.createElement('div');
-        div.className = 'flex gap-1 items-start linha-input relative mb-1';
-        div.id = `linha-${index}`;
-        div.innerHTML = `
-            <div class="flex flex-col w-[25%] relative">
-                <input type="text" list="lista-anticorpos-estoque" placeholder="Ant..." oninput="processarInput(${index}, this)" class="ant border p-2 rounded w-full text-sm outline-none bg-white">
-                <span class="msg-erro">Erro</span>
-            </div>
-            <select onchange="sincronizar()" class="clo border p-2 rounded w-[35%] text-sm outline-none bg-white" disabled><option value="">---</option></select>
-            <input type="text" placeholder="Result" oninput="sincronizar()" class="res border p-2 rounded w-[40%] text-sm outline-none">
-        `;
+        div.className = 'semana-bloco';
+        const setores = [
+            {id: 'cong', label: 'Congelação', classe: 'cong-row'},
+            {id: 'micro', label: 'Microscopia', classe: 'micro-row'},
+            {id: 'macro', label: 'Macroscopia', classe: 'macro-row'}
+        ];
+
+        let html = `<div class="semana-header">Semana ${num}</div><table><thead><tr><th class="cargo-col">SETOR</th>`;
+        for(let i=0; i<5; i++) {
+            if(dias[i]) html += `<th>${dias[i].dia}/${mes < 10 ? '0'+mes : mes}<br>${dias[i].label}</th>`;
+            else html += `<th style="color:#ccc">-</th>`;
+        }
+        html += `</tr></thead><tbody>`;
+
+        setores.forEach(s => {
+            html += `<tr class="${s.classe}"><td class="cargo-col">${s.label}</td>`;
+            for(let i=0; i<5; i++) {
+                if(dias[i]) {
+                    const idCell = `${s.id}-${dias[i].dia}`;
+                    html += `<td onclick="abrirMenu(event, '${idCell}')"><div id="${idCell}" class="celula-edit"></div></td>`;
+                } else html += `<td style="background:#f2f2f2"></td>`;
+            }
+            html += `</tr>`;
+        });
+        html += `</tbody></table>`;
+        div.innerHTML = html;
         return div;
     }
 
-    function processarInput(index, elemento) {
-        const valor = elemento.value;
-        const linha = document.getElementById(`linha-${index}`);
-        const selectClo = linha.querySelector('.clo');
-        const spanErro = linha.querySelector('.msg-erro');
-        popularDatalist(valor);
-        const chave = Object.keys(estoqueIHQ).find(k => k.toLowerCase() === valor.toLowerCase());
-        if (chave) {
-            elemento.classList.remove('erro-input'); spanErro.style.display = 'none';
-            selectClo.disabled = false; selectClo.innerHTML = '';
-            if (estoqueIHQ[chave].length === 1) selectClo.innerHTML = `<option value="${estoqueIHQ[chave][0]}" selected>${estoqueIHQ[chave][0]}</option>`;
-            else {
-                selectClo.innerHTML = '<option value="">CLONE?</option>';
-                estoqueIHQ[chave].forEach(o => selectClo.innerHTML += `<option value="${o}">${o}</option>`);
-            }
+    function abrirMenu(e, id) {
+        celulaAtiva = id;
+        menu.style.display = 'block';
+        menu.style.left = (e.pageX > window.innerWidth - 180 ? e.pageX - 160 : e.pageX) + 'px';
+        menu.style.top = e.pageY + 'px';
+        
+        let html = `<div class="menu-item" style="color:red; font-weight:bold" onclick="limparCelula()">❌ LIMPAR</div>`;
+        residentes.forEach(r => {
+            html += `<div class="menu-item" onclick="selecionarResidente('${r}')">${r}</div>`;
+        });
+        menu.innerHTML = html;
+        e.stopPropagation();
+    }
+
+    function selecionarResidente(nome) {
+        const tipo = celulaAtiva.split('-')[0];
+        if(!escalaData[celulaAtiva]) escalaData[celulaAtiva] = [];
+
+        if(tipo === 'cong') {
+            escalaData[celulaAtiva] = [nome];
         } else {
-            elemento.classList.add('erro-input'); spanErro.style.display = (valor==="") ? 'none' : 'block';
-            selectClo.disabled = true; selectClo.innerHTML = '<option value="">---</option>';
+            if(!escalaData[celulaAtiva].includes(nome)) escalaData[celulaAtiva].push(nome);
         }
-        sincronizar();
+        document.getElementById(celulaAtiva).innerHTML = escalaData[celulaAtiva].map(n => `<span class="badge-nome">${n}</span>`).join('');
+        fecharMenu();
+        atualizarStats();
+        save();
     }
 
-    function sincronizar() {
-        const b = "1.8pt solid black";
-        let h = `<table style="border-collapse:collapse; width:523pt; font-family:'Trade Gothic Next Rounded', Arial, sans-serif; border:${b}; table-layout:fixed;">`;
-        h += `<tr style="background:#D9D9D9; font-weight:bold; height:21.5pt;"><th style="border:${b}; width:80pt; font-size:14px; vertical-align:middle; text-align:left; padding-left:8px;">ANTICORPO</th><th style="border:${b}; width:129pt; font-size:14px; vertical-align:middle; text-align:left; padding-left:8px;">CLONE-FABRICANTE</th><th style="border:${b}; width:314pt; font-size:14px; vertical-align:middle; text-align:left; padding-left:8px;">RESULTADO</th></tr>`;
-        document.querySelectorAll('.linha-input').forEach(div => {
-            const a = div.querySelector('.ant').value; const c = div.querySelector('.clo').value; const r = div.querySelector('.res').value;
-            const chave = Object.keys(estoqueIHQ).find(k => k.toLowerCase() === a.toLowerCase());
-            if (chave) h += `<tr style="height:15pt;"><td style="border:${b}; padding:0 8px; font-size:14px; vertical-align:middle;">${chave}</td><td style="border:${b}; padding:0 8px; font-size:14px; vertical-align:middle;">${c}</td><td style="border:${b}; padding:0 8px; font-size:14px; vertical-align:middle;">${r}</td></tr>`;
-        });
-        document.getElementById('area-tabela').innerHTML = h + `</table>`;
-    }
-
-    function adicionarLinha() { const c = document.getElementById('container-inputs'); c.appendChild(criarLinhaUI(c.children.length)); }
-    function abrirModal() { 
-        document.getElementById('modalPaineis').style.display = 'flex'; 
-        const cont = document.getElementById('listaPaineisVisual');
-        cont.innerHTML = '';
-        Object.keys(paineisPadrao).sort().forEach(k => {
-            cont.innerHTML += `<div class="p-3 border-b text-xs"><b>${k}</b>: ${paineisPadrao[k].join(', ')}</div>`;
-        });
-    }
-    function fecharModal() { document.getElementById('modalPaineis').style.display = 'none'; }
-    
-    function limparTabela() {
-        if(confirm("Limpar toda a tela?")){
-            // 1. Reset Table Inputs
-            document.getElementById('container-inputs').innerHTML = '';
-            for(let i=0; i<8; i++) adicionarLinha();
-            sincronizar();
-
-            // 2. Reset Conclusion Section
-            document.getElementById('select-modelo-conclusao').value = ""; 
-            document.getElementById('inputs-dinamicos-conclusao').innerHTML = ""; 
-            document.getElementById('area-conclusao').innerHTML = ""; 
+    function limparCelula() {
+        if(celulaAtiva) {
+            document.getElementById(celulaAtiva).innerHTML = '';
+            delete escalaData[celulaAtiva];
+            fecharMenu();
+            atualizarStats();
+            save();
         }
     }
-    
-    function copiarCompleto() {
-        const conteudo = document.getElementById('documento-final').innerHTML;
-        const b = new Blob([conteudo], { type: "text/html" });
-        navigator.clipboard.write([new ClipboardItem({ "text/html": b })]).then(() => alert("LAUDO COMPLETO COPIADO!"));
+
+    function fecharMenu() { menu.style.display = 'none'; }
+
+    function atualizarStats() {
+        const stats = {};
+        residentes.forEach(r => stats[r] = {cong: 0, micro: 0, macro: 0});
+
+        Object.keys(escalaData).forEach(id => {
+            const tipo = id.split('-')[0];
+            escalaData[id].forEach(nome => {
+                if(stats[nome]) stats[nome][tipo]++;
+            });
+        });
+
+        const container = document.getElementById('stats-container');
+        const counts = [];
+        residentes.forEach(r => counts.push(stats[r].cong, stats[r].micro, stats[r].macro));
+        const max = Math.max(...counts, 1);
+
+        container.innerHTML = residentes.map(r => `
+            <div class="stat-card">
+                <strong>${r}</strong>
+                <div class="stat-row">
+                    <span class="stat-label">Cong:</span>
+                    <div class="stat-bar-bg"><div class="stat-bar-fill fill-cong" style="width:${(stats[r].cong/max)*100}%"></div></div>
+                    <span class="stat-count">${stats[r].cong}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Micro:</span>
+                    <div class="stat-bar-bg"><div class="stat-bar-fill fill-micro" style="width:${(stats[r].micro/max)*100}%"></div></div>
+                    <span class="stat-count">${stats[r].micro}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Macro:</span>
+                    <div class="stat-bar-bg"><div class="stat-bar-fill fill-macro" style="width:${(stats[r].macro/max)*100}%"></div></div>
+                    <span class="stat-count">${stats[r].macro}</span>
+                </div>
+            </div>
+        `).join('');
     }
 
-    // LIMPANDO LOCALSTORAGE
-    localStorage.removeItem('guilis_estoque');
-    localStorage.removeItem('guilis_paineis');
+    window.onclick = fecharMenu;
+    inputData.onchange = () => { if(confirm('Mudar o mês limpará a escala atual da tela. Continuar?')) { escalaData = {}; gerarEscala(); save(); } };
+    init();
+</script>
 
-    atualizarSelectPaineis();
-    for(let i=0; i<8; i++) adicionarLinha();
-    sincronizar();
-    </script>
 </body>
 </html>
