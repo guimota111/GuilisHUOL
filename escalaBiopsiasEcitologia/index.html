@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <title>GUILIS - Distribuição Rápida</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #4a66b4;
+            --header-table: #c0dbd5;
+            --bg-body: #f0f0f0;
+            --danger: #c0392b;
+            --success: #27ae60;
+            --accent: #f39c12;
+        }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: var(--bg-body); height: 100vh; overflow: hidden; }
+        
+        #sidebar { width: 320px; background: #2c3e50; color: white; padding: 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+        #main-content { flex: 1; padding: 20px; overflow-y: auto; height: 100vh; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+        .nav-header { padding: 10px; background: #fff; border-bottom: 1px solid #ddd; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
+        .nav-header a { text-decoration: none; color: var(--primary); font-weight: bold; }
+
+        /* TABELA */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; table-layout: fixed; }
+        th, td { border: 2px solid #333; padding: 15px; text-align: center; font-size: 1.1rem; }
+        th { background-color: var(--header-table); color: #000; text-transform: uppercase; font-size: 0.9rem; }
+        
+        .col-residente { width: 25%; }
+        .col-cota { width: 15%; }
+        .col-progresso { width: 60%; }
+
+        .residente-nome { text-align: left; font-weight: bold; }
+        .cota-numero { font-size: 1.4rem; font-weight: 800; }
+
+        /* INTERFACE SIDEBAR */
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.85rem; color: #bdc3c7; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: none; font-size: 1rem; box-sizing: border-box; }
+        
+        /* BOTÕES RÁPIDOS DE SELEÇÃO */
+        #btn-grid-residentes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+        .btn-residente-atalho { 
+            background: var(--primary); color: white; padding: 8px; font-size: 0.85rem; 
+            cursor: pointer; text-align: center; font-weight: bold; transition: 0.2s;
+        }
+        .btn-residente-atalho:hover { background: #3a539b; transform: scale(1.02); }
+        .btn-residente-atalho:active { background: var(--success); }
+
+        .btn-clear { background: var(--danger); color: white; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-copy { background: #8e44ad; color: white; font-weight: bold; cursor: pointer; margin-top: 25px; }
+        
+        /* POOL EDITÁVEL */
+        .pool-item { display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 5px 10px; margin-bottom: 4px; border-radius: 4px; font-size: 0.8rem; }
+        .btn-del-pool { color: #e74c3c; cursor: pointer; font-weight: bold; }
+
+        /* LISTA ATIVA */
+        .residente-ativo { display: flex; justify-content: space-between; background: #16a085; padding: 6px; margin-bottom: 4px; border-radius: 4px; font-size: 0.85rem; }
+
+        #status-msg { font-size: 0.9rem; color: var(--success); font-weight: bold; }
+        hr { opacity: 0.1; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h3 style="margin-top:0">CONTROLE DE FLUXO</h3>
+    
+    <label>SETOR:</label>
+    <select id="modo-escala" onchange="atualizarInterface()">
+        <option value="BIÓPSIAS">BIÓPSIAS</option>
+        <option value="CITOLOGIA">CITOLOGIA</option>
+    </select>
+
+    <label>MÊS:</label>
+    <input type="month" id="mes-ref" value="2026-02" onchange="atualizarMes()">
+    
+    <hr>
+    
+    <label>COTA ATUAL:</label>
+    <input type="number" id="cota-valor" value="15" style="background: #ecf0f1; font-weight: bold; text-align: center;">
+
+    <label>CLIQUE PARA ADICIONAR:</label>
+    <div id="btn-grid-residentes">
+        </div>
+
+    <button class="btn-clear" onclick="limparEscala()">🗑️ LIMPAR ESCALA</button>
+
+    <hr>
+
+    <label>LISTA ATIVA (ORDEM DE CORTE):</label>
+    <div id="lista-ativa"></div>
+
+    <button class="btn-copy" onclick="copiarImagem()">📋 COPIAR IMAGEM</button>
+
+    <hr>
+
+    <label>GERENCIAR NOMES (POOL):</label>
+    <div id="pool-residentes"></div>
+    <div style="display: flex; gap: 5px; margin-top: 5px;">
+        <input type="text" id="novo-nome" placeholder="Novo..." style="margin-top:0; font-size: 0.8rem;">
+        <button onclick="adicionarAoPool()" style="width: 40px; margin-top:0; background: var(--success); color: white;">+</button>
+    </div>
+</div>
+
+<div id="main-content">
+    <div class="nav-header">
+        <a href="../index.html">🏠 Menu Principal</a>
+        <span id="status-msg"></span>
+    </div>
+
+    <div class="container" id="capture-area">
+        <div style="text-align: center; border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px;">
+            <h1 id="titulo-escala" style="margin:0; font-size: 1.6rem;">CONTROLE DE DISTRIBUIÇÃO - BIÓPSIAS</h1>
+            <h2 id="label-mes" style="margin:5px 0 0 0; color: #444; text-transform: uppercase; font-size: 1.1rem;"></h2>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-residente">RESIDENTE</th>
+                    <th class="col-cota">COTA</th>
+                    <th class="col-progresso">Distribuição</th>
+                </tr>
+            </thead>
+            <tbody id="corpo-tabela"></tbody>
+        </table>
+        
+        <p style="margin-top: 25px; font-style: italic; color: #999; font-size: 0.8rem; text-align: center;">
+            Responsável: _________________________________
+        </p>
+    </div>
+</div>
+
+<script>
+    let residentesPool = JSON.parse(localStorage.getItem('guilis_residentes')) || ["Luana", "Liana", "Lucas", "Henrique", "Renato", "David", "Rafael"];
+    let escalaAtiva = JSON.parse(localStorage.getItem('guilis_distribuicao_ativa')) || [];
+
+    function init() {
+        renderPool();
+        atualizarInterface();
+        atualizarMes();
+        renderTabela();
+    }
+
+    // Gerenciamento do Pool
+    function adicionarAoPool() {
+        const input = document.getElementById('novo-nome');
+        if (input.value) {
+            residentesPool.push(input.value);
+            input.value = '';
+            savePool();
+            renderPool();
+        }
+    }
+
+    function removerDoPool(index) {
+        if(confirm("Remover do cadastro permanente?")) {
+            residentesPool.splice(index, 1);
+            savePool();
+            renderPool();
+        }
+    }
+
+    function renderPool() {
+        const containerPool = document.getElementById('pool-residentes');
+        const containerBotoes = document.getElementById('btn-grid-residentes');
+        
+        // Renderiza lista de exclusão na base da sidebar
+        containerPool.innerHTML = residentesPool.map((r, i) => `
+            <div class="pool-item">
+                <span>${r}</span>
+                <span class="btn-del-pool" onclick="removerDoPool(${i})">×</span>
+            </div>
+        `).join('');
+
+        // Renderiza botões de atalho no topo
+        containerBotoes.innerHTML = residentesPool.map(r => `
+            <div class="btn-residente-atalho" onclick="adicionarNaEscala('${r}')">${r}</div>
+        `).join('');
+    }
+
+    // Escala do Dia
+    function adicionarNaEscala(nome) {
+        const cota = document.getElementById('cota-valor').value;
+        escalaAtiva.push({ nome, cota });
+        saveEscala();
+        renderTabela();
+    }
+
+    function removerDaEscala(index) {
+        escalaAtiva.splice(index, 1);
+        saveEscala();
+        renderTabela();
+    }
+
+    function limparEscala() {
+        if(confirm("Zerar a lista atual?")) {
+            escalaAtiva = [];
+            saveEscala();
+            renderTabela();
+        }
+    }
+
+    function renderTabela() {
+        const corpo = document.getElementById('corpo-tabela');
+        const listaLateral = document.getElementById('lista-ativa');
+        
+        corpo.innerHTML = escalaAtiva.map(item => `
+            <tr>
+                <td class="residente-nome">${item.nome}</td>
+                <td class="cota-numero">${item.cota}</td>
+                <td style="background:#fafafa"></td>
+            </tr>
+        `).join('');
+
+        listaLateral.innerHTML = escalaAtiva.map((item, i) => `
+            <div class="residente-ativo">
+                <span style="color:white; font-weight:bold;">${item.nome} (${item.cota})</span>
+                <span style="color:white; cursor:pointer;" onclick="removerDaEscala(${i})">×</span>
+            </div>
+        `).join('');
+    }
+
+    // Auxiliares
+    function atualizarInterface() {
+        const modo = document.getElementById('modo-escala').value;
+        document.getElementById('titulo-escala').innerText = `CONTROLE DE DISTRIBUIÇÃO - ${modo}`;
+    }
+
+    function atualizarMes() {
+        const [ano, mes] = document.getElementById('mes-ref').value.split('-');
+        const data = new Date(ano, mes - 1);
+        document.getElementById('label-mes').innerText = data.toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'});
+    }
+
+    function savePool() { localStorage.setItem('guilis_residentes', JSON.stringify(residentesPool)); }
+    function saveEscala() { localStorage.setItem('guilis_distribuicao_ativa', JSON.stringify(escalaAtiva)); }
+
+    async function copiarImagem() {
+        const area = document.getElementById('capture-area');
+        const msg = document.getElementById('status-msg');
+        msg.innerText = "Copiando...";
+        try {
+            const canvas = await html2canvas(area, { backgroundColor: '#ffffff', scale: 3 });
+            canvas.toBlob(async (blob) => {
+                await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                msg.innerText = "✅ Sucesso!";
+                setTimeout(() => msg.innerText = "", 3000);
+            });
+        } catch (err) { msg.innerText = "❌ Erro."; }
+    }
+
+    init();
+</script>
+</body>
+</html>
