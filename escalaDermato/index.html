@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <title>GUILIS - Escala Dermato</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #e67e22; 
+            --bg-body: #f4f7f6;
+            --text-dark: #2c3e50;
+        }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: var(--bg-body); height: 100vh; overflow: hidden; }
+        
+        #sidebar { width: 320px; background: #2c3e50; color: white; padding: 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+        #main-content { flex: 1; padding: 20px; overflow-y: auto; height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        .container { width: 100%; max-width: 600px; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+
+        .nav-header { width: 100%; max-width: 600px; padding: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-header a { text-decoration: none; color: var(--primary); font-weight: bold; }
+
+        /* CARDS DE SEMANA */
+        .semana-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+        }
+        .semana-info strong { display: block; font-size: 1.1rem; color: var(--primary); }
+        .semana-info span { font-size: 0.9rem; color: #7f8c8d; }
+        .residente-atribuido { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); text-transform: uppercase; }
+
+        /* INTERFACE */
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.8rem; color: #bdc3c7; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: none; font-size: 1rem; }
+        
+        .btn-copy { background: #8e44ad; color: white; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .pool-item { display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 5px 10px; margin-bottom: 4px; border-radius: 4px; font-size: 0.8rem; }
+        .btn-del { color: #e74c3c; cursor: pointer; font-weight: bold; }
+        
+        #status-msg { font-size: 0.9rem; color: #27ae60; font-weight: bold; }
+        hr { opacity: 0.1; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h3 style="margin-top:0">DERMATOPATOLOGIA</h3>
+    
+    <label>MÊS DE REFERÊNCIA:</label>
+    <input type="month" id="mes-ref" value="2026-02" onchange="gerarSemanas()">
+    
+    <hr>
+    <div id="controles-semanas"></div>
+
+    <button class="btn-copy" onclick="copiarImagem()">📋 COPIAR ESCALA (IMG)</button>
+
+    <hr>
+    <label>GERENCIAR RESIDENTES:</label>
+    <div id="pool-residentes"></div>
+    <div style="display: flex; gap: 5px; margin-top: 5px;">
+        <input type="text" id="novo-nome" placeholder="Novo..." style="margin-top:0; font-size: 0.8rem;">
+        <button onclick="adicionarAoPool()" style="width: 40px; margin-top:0; background: var(--primary); color: white; font-weight:bold;">+</button>
+    </div>
+</div>
+
+<div id="main-content">
+    <div class="nav-header">
+        <a href="../index.html">🏠 Menu Principal</a>
+        <span id="status-msg"></span>
+    </div>
+
+    <div class="container" id="capture-area">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="margin:0; font-size: 1.8rem; color: var(--primary);">RESPONSÁVEIS - DERMATOPATOLOGIA</h1>
+            <h2 id="label-mes" style="margin:5px 0 0 0; color: #7f8c8d; text-transform: uppercase; font-size: 1.1rem;"></h2>
+        </div>
+
+        <div id="lista-semanas-display"></div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 0.8rem;">
+            Hospital Universitário Onofre Lopes - HUOL
+        </div>
+    </div>
+</div>
+
+<script>
+    let residentes = JSON.parse(localStorage.getItem('guilis_residentes')) || ["Luana", "Liana", "Lucas", "Henrique", "Renato", "David", "Rafael"];
+    let escalaDermato = JSON.parse(localStorage.getItem('guilis_escala_dermato')) || {};
+
+    function init() {
+        renderPool();
+        gerarSemanas();
+    }
+
+    function adicionarAoPool() {
+        const input = document.getElementById('novo-nome');
+        if (input.value) {
+            residentes.push(input.value);
+            input.value = '';
+            localStorage.setItem('guilis_residentes', JSON.stringify(residentes));
+            renderPool();
+            gerarSemanas();
+        }
+    }
+
+    function removerDoPool(index) {
+        if(confirm("Remover residente?")) {
+            residentes.splice(index, 1);
+            localStorage.setItem('guilis_residentes', JSON.stringify(residentes));
+            renderPool();
+            gerarSemanas();
+        }
+    }
+
+    function renderPool() {
+        document.getElementById('pool-residentes').innerHTML = residentes.map((r, i) => `
+            <div class="pool-item"><span>${r}</span><span class="btn-del" onclick="removerDoPool(${i})">×</span></div>
+        `).join('');
+    }
+
+    function gerarSemanas() {
+        const [ano, mesStr] = document.getElementById('mes-ref').value.split('-').map(Number);
+        const labelMes = document.getElementById('label-mes');
+        const containerCards = document.getElementById('lista-semanas-display');
+        const containerControles = document.getElementById('controles-semanas');
+        
+        labelMes.innerText = new Date(ano, mesStr - 1).toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'});
+
+        containerCards.innerHTML = '';
+        containerControles.innerHTML = '';
+
+        let data = new Date(ano, mesStr - 1, 1);
+        let ultimoDia = new Date(ano, mesStr, 0);
+        let semanas = [];
+
+        // Lógica para pegar apenas blocos de Segunda a Sexta
+        while (data <= ultimoDia) {
+            // Se for Sábado(6) ou Domingo(0), pula pro próximo dia
+            if (data.getDay() === 0 || data.getDay() === 6) {
+                data.setDate(data.getDate() + 1);
+                continue;
+            }
+
+            let inicio = new Date(data);
+            // Encontra a sexta-feira da mesma semana ou o último dia do mês
+            let fim = new Date(data);
+            while (fim.getDay() !== 5 && fim < ultimoDia) {
+                fim.setDate(fim.getDate() + 1);
+            }
+
+            semanas.push({
+                inicio: inicio.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}),
+                fim: fim.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})
+            });
+
+            // Pula para a próxima segunda-feira
+            data.setDate(fim.getDate() + 1);
+            while (data.getDay() !== 1 && data <= ultimoDia) {
+                data.setDate(data.getDate() + 1);
+            }
+        }
+
+        semanas.forEach((sem, i) => {
+            const num = i + 1;
+            const chave = `${ano}-${mesStr}-s${num}`;
+            const salvo = escalaDermato[chave] || "";
+
+            containerCards.innerHTML += `
+                <div class="semana-card">
+                    <div class="semana-info"><strong>SEMANA ${num}</strong><span>${sem.inicio} a ${sem.fim}</span></div>
+                    <div class="residente-atribuido" id="display-${chave}">${salvo}</div>
+                </div>`;
+
+            const sel = document.createElement('select');
+            sel.innerHTML = `<option value="">- Sem ${num} -</option>` + residentes.map(r => `<option value="${r}" ${r===salvo?'selected':''}>${r}</option>`).join('');
+            sel.onchange = (e) => {
+                escalaDermato[chave] = e.target.value;
+                document.getElementById(`display-${chave}`).innerText = e.target.value;
+                localStorage.setItem('guilis_escala_dermato', JSON.stringify(escalaDermato));
+            };
+            containerControles.appendChild(sel);
+        });
+    }
+
+    async function copiarImagem() {
+        const area = document.getElementById('capture-area');
+        const msg = document.getElementById('status-msg');
+        msg.innerText = "Copiando...";
+        try {
+            const canvas = await html2canvas(area, { backgroundColor: '#ffffff', scale: 3 });
+            canvas.toBlob(async (blob) => {
+                await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                msg.innerText = "✅ Sucesso!"; setTimeout(() => msg.innerText = "", 3000);
+            });
+        } catch (err) { msg.innerText = "❌ Erro."; }
+    }
+
+    init();
+</script>
+</body>
+</html>
