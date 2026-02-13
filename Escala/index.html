@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
-    <title>GUILIS v2.2 - Escala Final</title>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="0">
+    
+    <title>GUILIS v2.5 - Escala Inteligente</title>
+
+    <script>
+        // Força o carregamento da biblioteca sem usar cache antigo
+        document.write('<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js?v=' + Date.now() + '"><\/script>');
+    </script>
+
     <style>
         :root {
             --primary: #4a66b4;
@@ -12,40 +20,31 @@
             --cor-cong: #2980b9; 
             --cor-micro: #27ae60; 
             --cor-macro: #e67e22; 
-            --bg-escala: #ffffff;
-            --bg-stats-img: #f8f9fa; /* Cor de fundo para a imagem de status */
         }
 
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: #f0f0f0; height: 100vh; overflow: hidden; }
-        
         #sidebar { width: 320px; background: #2c3e50; color: white; padding: 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
         #main-content { flex: 1; padding: 10px; overflow-y: auto; height: 100vh; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-
         .nav-header { padding: 8px; background: #fff; border-bottom: 1px solid #ddd; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
         .nav-header a { text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.85rem; }
 
-        .semana-bloco { margin-bottom: 12px; border: 1.2px solid #000; background: white; }
+        .semana-bloco { margin-bottom: 12px; border: 1.5px solid #000; background: white; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { border: 1px solid #000; padding: 3px; text-align: center; vertical-align: middle; position: relative; }
-        th { background-color: var(--header-tabela); height: 28px; font-weight: bold; font-size: 0.85rem; }
+        th { background-color: var(--header-tabela); height: 28px; font-weight: bold; font-size: 0.8rem; }
         .semana-col { width: 50px; background-color: #dfd8d8 !important; font-size: 0.75rem; font-weight: bold; color: #333; }
         
-        .cong-row { background-color: #7c8ee9 !important; height: 35px; }
+        .cong-row { background-color: #7c8ee9 !important; height: 32px; }
         .micro-row { background-color: #e8f5e9 !important; min-height: 65px; height: auto; }
         .macro-row { background-color: #fff9c4 !important; min-height: 65px; height: auto; }
         
-        /* FONTE DOS NOMES AUMENTADA */
-        .badge-nome { 
-            background: transparent; padding: 2px 4px; font-size: 1.05rem; /* Fonte maior */
-            margin: 1px; display: inline-flex; align-items: center; 
-            font-weight: 700; color: #000; white-space: nowrap; 
-        }
+        .badge-nome { background: transparent; padding: 1px 4px; font-size: 1.05rem; margin: 1px; display: inline-flex; align-items: center; font-weight: 700; color: #000; white-space: nowrap; }
         .btn-rm-nome { color: #e74c3c; cursor: pointer; margin-left: 4px; font-weight: bold; font-size: 1rem; }
         .input-cell { width: 100%; border: none; background: transparent; text-align: center; font-size: 0.9rem; outline: none; }
 
-        /* BARRAS DE STATUS */
-        .stat-card { background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); transition: 0.3s; }
+        /* ESTILO SIDEBAR (TELA) */
+        .stat-card { background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); }
         .stat-card strong { display: block; margin-bottom: 4px; font-size: 0.9rem; color: white; }
         .stat-row { display: flex; align-items: center; margin-bottom: 3px; font-size: 0.75rem; color: #ccc; }
         .stat-label { width: 40px; }
@@ -53,6 +52,11 @@
         .stat-bar-fill { height: 100%; }
         .stat-count { width: 15px; text-align: right; font-weight: bold; color: white; }
         
+        /* ESTILO EXPORTAÇÃO (IMAGEM) */
+        .img-mode .stat-card { background: #76abdf !important; border: 2px solid #000 !important; }
+        .img-mode .stat-card strong, .img-mode .stat-count, .img-mode .stat-label { color: #000 !important; font-weight: bold; }
+        .img-mode .stat-bar-bg { background: #ddd !important; border: 1px solid #999; }
+
         .fill-cong { background-color: var(--cor-cong) !important; }
         .fill-micro { background-color: var(--cor-micro) !important; }
         .fill-macro { background-color: var(--cor-macro) !important; }
@@ -63,24 +67,21 @@
 
         button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-add { background: #27ae60; color: white; }
-        .btn-magic { background: #f39c12; color: white; margin-bottom: 15px; border: 2px solid #fff; }
+        .btn-magic { background: #f39c12; color: white; margin-bottom: 5px; border: 2px solid #fff; }
+        .btn-clear { background: #c0392b; color: white; margin-bottom: 15px; }
         .btn-copy { background: #8e44ad; color: white; }
         
         .no-export { visibility: hidden !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
-        
-        /* ESTILO DA IMAGEM DE STATUS EXPORTADA */
-        .img-mode .stat-card { background: #ffffff !important; border: 1px solid #ddd !important; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
-        .img-mode .stat-card strong, .img-mode .stat-count, .img-mode .stat-label { color: #333 !important; }
-        .img-mode .stat-bar-bg { background: #eee !important; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h3 style="margin:0">GUILIS v2.2</h3>
+    <h3 style="margin:0">GUILIS v2.5</h3>
     <input type="month" id="mes-selecionado" value="2026-02" style="width:100%; padding:8px; margin-top:5px; margin-bottom:10px;">
     
     <button class="btn-magic" onclick="sugerirEscala()">✨ SUGERIR ESCALA</button>
+    <button class="btn-clear" onclick="limparEscalaTotal()">🗑️ LIMPAR TELA</button>
 
     <hr style="opacity:0.2; margin: 15px 0;">
     <div id="lista-cadastro"></div>
@@ -140,7 +141,12 @@
         if(confirm('Remover?')) { residentes.splice(i,1); renderResidentes(); atualizarStats(); save(); }
     }
 
+    function limparEscalaTotal() {
+        if(confirm('Limpar todos os nomes da escala?')) { escalaData = {}; gerarEscala(); save(); }
+    }
+
     function sugerirEscala() {
+        if (residentes.length < 3) return alert("Adicione mais residentes.");
         const nMicro = parseInt(prompt("Residentes na MICRO/dia:", "2"));
         const nMacro = parseInt(prompt("Residentes na MACRO/dia:", "2"));
         if (isNaN(nMicro) || isNaN(nMacro)) return;
@@ -148,17 +154,39 @@
         escalaData = {};
         const [ano, mes] = document.getElementById('mes-selecionado').value.split('-').map(Number);
         const ultimoDia = new Date(ano, mes, 0).getDate();
-        const sorteados = [...residentes].sort(() => Math.random() - 0.5);
-        let ptr = 0;
+        let counts = {};
+        residentes.forEach(r => counts[r] = { cong: 0, micro: 0, macro: 0 });
 
         for (let d = 1; d <= ultimoDia; d++) {
             const data = new Date(ano, mes-1, d);
             if (data.getDay() >= 1 && data.getDay() <= 5) {
-                escalaData[`cong-${d}`] = [sorteados[ptr++ % residentes.length]];
-                let mi = []; for(let i=0; i<nMicro; i++) mi.push(sorteados[ptr++ % residentes.length]);
-                escalaData[`micro-${d}`] = mi;
-                let ma = []; for(let i=0; i<nMacro; i++) ma.push(sorteados[ptr++ % residentes.length]);
-                escalaData[`macro-${d}`] = ma;
+                // Congelação
+                let candsCong = [...residentes].sort((a, b) => counts[a].cong - counts[b].cong || Math.random() - 0.5);
+                let eleitoCong = candsCong[0];
+                escalaData[`cong-${d}`] = [eleitoCong];
+                counts[eleitoCong].cong++;
+
+                // Macro
+                let candsMacro = [...residentes].sort((a, b) => counts[a].macro - counts[b].macro || Math.random() - 0.5);
+                let selecionadosMacro = [];
+                for (let r of candsMacro) {
+                    if (selecionadosMacro.length < nMacro) {
+                        selecionadosMacro.push(r);
+                        counts[r].macro++;
+                    }
+                }
+                escalaData[`macro-${d}`] = selecionadosMacro;
+
+                // Micro (com exclusão de quem já está na Macro)
+                let candsMicro = [...residentes].sort((a, b) => counts[a].micro - counts[b].micro || Math.random() - 0.5);
+                let selecionadosMicro = [];
+                for (let r of candsMicro) {
+                    if (selecionadosMicro.length < nMicro && !selecionadosMacro.includes(r)) {
+                        selecionadosMicro.push(r);
+                        counts[r].micro++;
+                    }
+                }
+                escalaData[`micro-${d}`] = selecionadosMicro;
             }
         }
         gerarEscala(); save();
@@ -266,17 +294,15 @@
         const rms = document.querySelectorAll('.btn-rm-nome');
         const inputs = document.querySelectorAll('.input-cell');
         
-        // Ativar modo imagem (fundo cinza e texto preto no status)
         if(idMostra === 'stats-container') {
             status.style.display = 'grid';
-            status.style.backgroundColor = '#f1f1f1'; // Fundo da imagem de status
+            status.style.backgroundColor = '#f1f1f1';
             area.classList.add('img-mode');
             escala.style.display = 'none';
         } else {
             escala.style.display = 'block';
             status.style.display = 'none';
         }
-
         rms.forEach(b => b.classList.add('no-export'));
         inputs.forEach(i => i.classList.add('no-export'));
 
@@ -291,7 +317,6 @@
             });
         } catch (err) { msg.innerText = "❌ Erro."; }
 
-        // Resetar visualização
         escala.style.display = 'block';
         status.style.display = 'none';
         area.classList.remove('img-mode');
