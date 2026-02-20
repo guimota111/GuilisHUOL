@@ -3,42 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUILIS - v8.3 (Tabela Fixada)</title>
+    <title>GUILIS - Tabela IHQ (V11 - Customizável)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* ESTILOS (Mantidos iguais) */
         .erro-input { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
         .msg-erro { color: #ef4444; font-size: 10px; display: none; position: absolute; bottom: -14px; left: 2px; }
         #modalPaineis { display: none; }
         .lista-scroll { overflow-y: auto; max-height: 400px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #ffffff; }
-        
-        /* Estilos do Preview */
         .laudo-preview { font-family: 'Times New Roman', serif; color: black; line-height: 1.1; }
-        .laudo-texto { margin-top: 15px; font-size: 11pt; text-align: justify; }
-        .laudo-ref { margin-top: 20px; font-size: 9pt; color: #444; border-top: 1px solid #ccc; padding-top: 5px; }
         
-        ::-webkit-scrollbar { width: 8px; }
+        .custom-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; background: white;
+            border: 2px solid #3b82f6; border-top: none; border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1000; display: none;
+        }
+        .dropdown-item { padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+        .dropdown-item:hover { background: #eff6ff; }
+        .dropdown-label { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: bold; padding: 6px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        .input-with-dropdown-active { border-color: #3b82f6 !important; border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; z-index: 1001; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-gray-100 p-8">
 
-    <datalist id="lista-anticorpos-estoque"></datalist>
-
-    <div class="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div class="bg-white p-6 rounded shadow-md border-t-4 border-blue-600">
+    <div class="max-w-full mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8">
+        
+        <div class="bg-white p-6 rounded shadow-md border-t-4 border-blue-600 h-fit max-w-3xl mx-auto xl:mx-0 w-full">
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h2 class="text-2xl font-bold text-blue-800 italic uppercase">GUILIS</h2>
-                    <p class="text-gray-500 text-sm font-medium">HUOL • NATAL/RN</p>
+                    <p class="text-gray-500 text-sm font-medium">HUOL • Tabela IHQ</p>
                 </div>
-                <button onclick="abrirModal()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded text-xs font-bold hover:bg-gray-200 border">
-                    📋 VER PROTOCOLOS
+                <button onclick="abrirModal()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded text-xs font-bold hover:bg-gray-200 border flex items-center gap-2">
+                    <span>⚙️</span> GERENCIAR PAINÉIS
                 </button>
             </div>
 
             <div class="mb-6 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1">1. Tabela de Anticorpos:</label>
+                <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1">Painel Rápido:</label>
                 <select id="select-paineis-ui" onchange="aplicarPainel(this.value); this.value='';" class="w-full border-2 border-blue-200 p-2 rounded text-sm bg-white font-bold text-blue-800 outline-none focus:border-blue-500">
                 </select>
             </div>
@@ -50,459 +55,523 @@
                 <button onclick="limparTabela()" class="bg-red-50 text-red-600 py-1 px-4 rounded font-bold hover:bg-red-100 transition-all flex-1 text-xs border border-red-100">LIMPAR TELA</button>
             </div>
 
-            <hr class="my-6 border-gray-200">
-
-            <div class="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <label class="block text-[10px] font-bold text-indigo-700 uppercase mb-2">2. Gerador de Conclusão:</label>
-                
-                <select id="select-modelo-conclusao" onchange="carregarInputsConclusao()" class="w-full border-2 border-indigo-200 p-2 rounded text-sm bg-white font-bold text-indigo-900 outline-none mb-3">
-                    <option value="">(Opcional) Selecione um modelo...</option>
-                    <option value="endometrio">Carcinoma de Endométrio (OMS 2020)</option>
-                    <option value="generico">Genérico / Texto Livre</option>
-                </select>
-
-                <div id="inputs-dinamicos-conclusao" class="space-y-3"></div>
+            <div class="mt-6">
+                <button onclick="copiarTabela()" class="w-full bg-blue-700 text-white font-black py-4 rounded-lg shadow-xl active:scale-95 transition-all text-sm uppercase tracking-widest hover:bg-blue-800">
+                    COPIAR TABELA
+                </button>
             </div>
-
-            <button onclick="copiarCompleto()" class="w-full bg-orange-600 text-white font-black py-4 rounded shadow-xl active:scale-95 transition-all text-lg uppercase tracking-widest mt-2">
-                COPIAR TUDO PARA O WORD
-            </button>
         </div>
 
-        <div class="bg-white p-8 rounded shadow-md w-[800px] mx-auto overflow-hidden">
+        <div class="bg-white p-8 rounded shadow-md w-full h-fit border border-gray-200">
             <h2 class="text-xl font-bold mb-6 text-gray-400 border-b pb-2 text-center text-xs uppercase tracking-[0.3em]">Visualização</h2>
-            
-            <div id="documento-final" class="laudo-preview">
-                <div id="area-tabela" class="flex justify-center mb-6"></div>
-                <div id="area-conclusao"></div>
+            <div id="documento-final" class="laudo-preview w-full">
+                <div class="w-full overflow-x-auto pb-4 flex justify-center">
+                    <div id="area-tabela"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="modalPaineis" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-5 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="text-lg font-bold text-gray-800 uppercase">Protocolos</h3>
+                <h3 class="text-lg font-bold text-gray-800 uppercase">Meus Protocolos</h3>
                 <button onclick="fecharModal()" class="text-gray-400 hover:text-red-500 text-3xl">&times;</button>
             </div>
-            <div class="p-6">
-                <div class="lista-scroll" id="listaPaineisVisual"></div>
+            
+            <div class="p-0 overflow-y-auto flex-1 bg-gray-50" id="listaPaineisVisual"></div>
+
+            <div class="p-5 border-t bg-white">
+                <h4 class="text-xs font-bold text-blue-600 uppercase mb-2">Criar Novo Painel (Baseado na tabela atual)</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="novo-painel-nome" placeholder="Nome do Painel (ex: Neuroendócrino)" class="border p-2 rounded text-sm flex-1 outline-none focus:border-blue-500">
+                    <button onclick="salvarNovoPainel()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700">SALVAR</button>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2">* Preencha a tabela na tela principal com os anticorpos desejados antes de salvar.</p>
             </div>
         </div>
     </div>
 
     <script>
-    // ==========================================
-    // 1. CONFIGURAÇÃO DE LAUDOS (CONCLUSÃO)
-    // ==========================================
-    const modelosConclusao = {
-        "endometrio": {
-            titulo: "Carcinoma de Endométrio",
-            campos: [
-                {
-                    label: "Diagnóstico (OMS 2020):",
-                    opcoes: [
-                        "Carcinoma endometrioide de alto grau, SOE",
-                        "Carcinoma endometrioide de baixo grau, SOE",
-                        "Carcinoma mucinoso",
-                        "Carcinoma seroso",
-                        "Carcinoma de células claras",
-                        "Carcinossarcoma",
-                        "Carcinoma endometrial misto"
-                    ]
-                },
-                {
-                    label: "Expressão de P53:",
-                    opcoes: [
-                        "expressão normal",
-                        "expressão nuclear anormal",
-                        "expressão citoplasmática anormal",
-                        "ausência de expressão"
-                    ]
-                },
-                {
-                    label: "Status de MMR (Reparo DNA):",
-                    opcoes: [
-                        "expressão preservada das proteínas dos genes de reparo do DNA",
-                        "perda de expressão das proteínas dos genes MLH-1 e PMS-2",
-                        "perda de expressão das proteínas dos genes MSH-2 e MSH-6",
-                        "perda de expressão da proteína do gene PMS-2",
-                        "perda de expressão da proteína do gene MSH-6"
-                    ]
-                }
-            ],
-            gerarTexto: (vals) => `<b>CONCLUSÃO</b><br>O perfil imuno-histoquímico, associado aos achados morfológicos, corrobora o diagnóstico de <b>${vals[0]}</b> - OMS 2020, com <b>${vals[1]}</b> do gene P53 e <b>${vals[2]}</b>.`,
-            textoFixo: `
-                <br><br>
-                <b>Interpretação imuno-histoquímica da expressão do P53</b><br>
-                <b>Expressão normal (fenótipo selvagem):</b> positividade nuclear de intensidade variável em até 5% das células neoplásicas.<br>
-                <b>Expressão anormal nuclear (mutação "missense"):</b> positividade nuclear de intensidade forte e difusa em mais de 80% das células neoplásicas.<br>
-                <b>Expressão anormal citoplasmática (mutação com perda de função e quebra do domínio nuclear):</b> positividade citoplasmática inequívoca acompanhada de positividade nuclear de intensidade variável nas células neoplásicas.<br>
-                <b>Expressão negativa (fenótipo "null" - mutação com perda de função):</b> ausência completa de expressão nas células neoplásicas.
-                <br><br>
-                <b>Interpretação imuno-histoquímica da expressão das proteínas dos genes de reparo do DNA</b><br>
-                <b>Imuno-histoquímica sugere status MSS:**</b><br>MLH1(+) PMS2(+) MSH2(+) MSH6(+)<br><br>
-                <b>Imuno-histoquímica sugere status MSI*. Necessário pesquisa de metilação da região promotora de MLH1:</b><br>MLH1(-) PMS2(-) MSH2(+) MSH6(+)<br><br>
-                <b>Imuno-histoquímica sugere status MSI*. Alta probabilidade de síndrome de Lynch:</b><br>MLH1(+) PMS2(+) MSH2(-) MSH6(-)<br><br>
-                <b>Imuno-histoquímica sugere status MSI*. Alta probabilidade de síndrome de Lynch:</b><br>MLH1(+) PMS2(+) MSH2(+) MSH6(-)<br><br>
-                <b>Imunohistoquímica sugere status MSI*. Alta probabilidade de síndrome de Lynch:</b><br>MLH1(+) PMS2(-) MSH2(+) MSH6(-)<br><br>
-                *MSI: Alta probabilidade de instabilidade de microssatélites **MSS: Estabilidade de microssatélites
-                <div class="laudo-ref">
-                Referências bibliográficas:<br>
-                1. Köbel M, Ronnett BM, Singh N, Soslow RA, Gilks CB, McCluggage WG. Interpretation of P53 Immunohistochemistry in Endometrial Carcinomas. Int J Gynecol Pathol. 2019.<br>
-                2. Köbel M, Kang EY. The Many Uses of p53 Immunohistochemistry in Gynecological Pathology. Int J Gynecol Pathol. 2021.<br>
-                3. Fitzgibbons PL, et al. Template for Reporting Results of Biomarker Testing of Specimens From Patients With Carcinoma of the Endometrium. CAP, 2019.
-                </div>
-            `
-        },
-        "generico": {
-            titulo: "Conclusão Livre",
-            campos: [],
-            gerarTexto: () => document.getElementById('txt-conclusao-livre').value.replace(/\n/g, "<br>"),
-            textoFixo: ""
-        }
-    };
+        // ==========================================
+        // 1. DADOS (ESTOQUE & PAINÉIS FIXOS)
+        // ==========================================
+        const estoqueIHQ = {
+            "AML (actina músculo liso)": ["1A4 - Agilent", "1A4 - Cell Marque"],
+            "Alfafetoproteína": ["Policlonal - Cell Marque"],
+            "Anidrase carbônica IX (CA IX)": ["EP161 - Cell Marque"],
+            "ALK1": ["ALK1 – Agilent", "ALK01 - Ventana"],
+            "ALK (D5F3)": ["D5F3 - Ventana"],
+            "BCOR": ["C-10 - Zeta"],
+            "BCL-2": ["124 – Agilent", "124 - Ventana"],
+            "BCL-6": ["PG-B6p – Agilent", "GL191E/A8 - Cell Marque"],
+            "BER-EP4": ["Agilent", "Ber-EP4 - Cell Marque"],
+            "Beta-Catenina": ["β-Catenin-1 – Agilent", "Policlonal - Cell Marque", "14 - Cell Marque"],
+            "Beta-HCG": ["Policlonal - Cell Marque"],
+            "c-KIT (CD117)": ["EP10 - Ventana"],
+            "c-MYC": ["Ventana", "Y69 - Ventana"],
+            "CA125": ["Agilent", "M11 - Agilent", "OC125 - Cell Marque"],
+            "CA19.9": ["121SLE - Cell Marque"],
+            "Calcitonina": ["SP17 - Cell Marque"],
+            "Caldesmon": ["h-CD – Agilent", "E89 - Cell Marque"],
+            "Calponina": ["EP798Y - Cell Marque"],
+            "Calretinina": ["DAK-Calret 1 – Agilent", "SP65 - Ventana"],
+            "Carcinoembrionário (CEA)": ["II-7 – Agilent", "CEA31 - Cell Marque"],
+            "CD1a": ["010 – Agilent", "EP3622 - Cell Marque"],
+            "CD2": ["AB75 – Agilent", "MRQ-11 - Cell Marque"],
+            "CD3": ["policlonal – Agilent", "2GV6 - Ventana"],
+            "CD4": ["4B12 – Agilent", "SP35 - Ventana"],
+            "CD5": ["4C7 – Agilent", "SP19 - Ventana"],
+            "CD7": ["CBC.37 – Agilent", "SP94 - Ventana"],
+            "CD8": ["C8/144B – Agilent", "SP57 - Ventana"],
+            "CD10": ["DAK-CD10 – Agilent", "SP67 - Ventana"],
+            "CD15": ["Carb-3 – Agilent", "MMA - Ventana"],
+            "CD20": ["L26 – Agilent", "L26 - Ventana"],
+            "CD21": ["1F8 – Agilent"],
+            "CD23": ["DAK-CD23 – Agilent", "SP23 - Ventana"],
+            "CD30": ["Ber-H2 – Agilent", "Ber-H2 - Ventana"],
+            "CD31": ["JC70A – Agilent", "JC70 - Cell Marque"],
+            "CD34": ["QBEnd 10 – Agilent", "QBEnd/10 - Ventana"],
+            "CD43": ["DF-T1 – Agilent", "L60 - Ventana"],
+            "CD45": ["2B11 + PD7/26 – Agilent", "2B11 & PD7/26 - Cell Marque"],
+            "CD56": ["123C3 – Agilent", "MRQ-42 - Cell Marque"],
+            "CD57": ["NK1 - Cell Marque"],
+            "CD61": ["2f2 - Cell Marque"],
+            "CD68": ["KP1 – Agilent", "KP1 - Ventana"],
+            "CD79a": ["JCB117 – Agilent", "SP18 - Ventana"],
+            "CD99": ["12E7 - Agilent", "O13 - Ventana"],
+            "CD138": ["MI15 - Agilent", "B-A38 - Cell Marque"],
+            "CDK4": ["EP180 - BIOSB"],
+            "CDX2": ["DAK-CDX2 - Agilent", "EPR2764Y - Cell Marque"],
+            "CEA monoclonal": ["CEA31 - Cell Marque"],
+            "Ciclina D1": ["EP12 - Agilent", "SP4-R - Ventana"],
+            "AE1/AE3 (CK pan)": ["AE1/AE3/PCK26 - Ventana"],
+            "CAM5.2": ["CAM5.2 - Ventana"],
+            "CK5/6": ["D5/16 B4 - Agilent", "D5/16B4 - Ventana"],
+            "CK7": ["OV-TL 12/30 - Agilent", "SP52 - Ventana"],
+            "CK8/18": ["EP17/30 - Agilent", "B22.1 & B23.1 - Cell Marque"],
+            "CK19": ["RCK108 - Agilent", "A53-B/A2.26 - Cell Marque"],
+            "CK20": ["Ks20.8 - Agilent", "SP33 - Ventana"],
+            "34βE12": ["34βE12 - Agilent", "34B12 - Ventana"],
+            "Cromogranina A": ["LK2H10 - Ventana"],
+            "DBA44": ["AB779 - Abcam"],
+            "Desmina": ["D33 - Agilent", "DE-R-11 - Ventana"],
+            "DOG1": ["SP31 - Cell Marque"],
+            "E-Caderina": ["NCH-38 - Agilent", "36 - Ventana"],
+            "EMA": ["E29 - Agilent", "E29 - Ventana"],
+            "ERG": ["EPR3864 - Ventana"],
+            "Fator von Willebrand": ["Policlonal - Agilent"],
+            "Fator VIII": ["Policlonal - Cell Marque"],
+            "Fator XIIIa": ["AC-1A1 - Cell Marque"],
+            "FLI-1": ["MRQ-1 - Cell Marque"],
+            "GATA-3": ["L50-823 - Cell Marque"],
+            "GFAP": ["Policlonal - Agilent", "EP672Y - Cell Marque"],
+            "Glutamina Sintetase": ["GS6 - Cell Marque"],
+            "Glypican-3": ["1G12 - Cell Marque"],
+            "H3.3G34W": ["RM263 - RevMAb"],
+            "H3K27me3": ["3C36B11 - Cell Marque"],
+            "H3K36M": ["RM193 - RevMAb"],
+            "Hepatocyte": ["OCH1E5 - Agilent", "OCH1E5 - Cell Marque"],
+            "HER2": ["4B5 - Ventana"],
+            "HHV8": ["13B10 - Cell Marque"],
+            "INI-1": ["MRQ-27 - Cell Marque"],
+            "Inibina": ["R1 - Agilent"],
+            "Kappa": ["Policlonal - Agilent", "Policlonal - Ventana"],
+            "Ki-67": ["MIB1 - Agilent", "30-9 - Ventana"],
+            "Lambda": ["Policlonal - Agilent", "Policlonal - Ventana"],
+            "LEF1": ["EP310 - Cell Marque"],
+            "Melan-A": ["A103 - Agilent", "A103 - Ventana"],
+            "Melanossomo (HMB45)": ["HMB45 - Agilent", "HMB45 - Ventana"],
+            "MDM2": ["IF2 - Cell Marque"],
+            "Mesothelial Cells (HBME-1)": ["HBME-1 - Cell Marque"],
+            "MLH1": ["ES05 - Agilent", "M1 - Ventana"],
+            "MSH2": ["FE11 - Agilent", "G219-1129 - Ventana"],
+            "MSH6": ["EP49 - Agilent", "EP49 - Ventana"],
+            "PMS2": ["EP51 - Agilent", "A16-4 - Ventana"],
+            "MUM1": ["MUM1p - Agilent", "MRQ-43 - Cell Marque"],
+            "Mieloperoxidase": ["Policlonal - Agilent", "Policlonal - Cell Marque"],
+            "Miogenina": ["F5D - Agilent", "F5D - Cell Marque"],
+            "MyoD1": ["EP212 - Cell Marque"],
+            "Napsina A": ["MRQ-60 - Cell Marque"],
+            "NKX2.2": ["EP336 - Cell Marque"],
+            "NKX3.1": ["EP356 - Cell Marque"],
+            "Oct-2": ["MRQ-2 - Cell Marque"],
+            "OCT3/4": ["N1NK - Agilent", "MRQ-10 - Cell Marque"],
+            "p16": ["E6H4 - Ventana"],
+            "p40": ["DAK-p40 - Agilent", "BC28 - Ventana"],
+            "p53": ["DO-7 - Agilent", "DO-7 - Cell Marque"],
+            "p63": ["DAK-p63 - Agilent", "4A4 - Ventana"],
+            "PAX-5": ["DAK-Pax5 - Agilent", "SP34 - Ventana"],
+            "PAX-8": ["MRQ-50 - Cell Marque"],
+            "PD-L1": ["22C3 - Dako", "SP243 - Ventana", "SP152 - Ventana"],
+            "PLAP": ["8A9 - Agilent", "NB10 - Cell Marque"],
+            "Podoplanina (D2-40)": ["D2-40 - Cell Marque"],
+            "PSA": ["3E6 - Agilent", "Policlonal - Ventana"],
+            "PSAP": ["PASE/4LI - Cell Marque"],
+            "Racemase": ["13H4 - Agilent", "SP116 - Ventana"],
+            "RA": ["SP107 - Cell Marque"],
+            "RE": ["EP1 - Agilent", "SP1 - Ventana"],
+            "RP": ["PgR 636 - Agilent", "1E2 - Ventana"],
+            "ROS1": ["SP384 - Ventana"],
+            "S100": ["Policlonal - Agilent", "4C4.9 - Ventana"],
+            "SALL-4": ["6E3 - Cell Marque"],
+            "SATB2": ["EP281 - Cell Marque"],
+            "SF-1": ["EP434 - Cell Marque"],
+            "Sinaptofisina": ["DAK-SYNAP - Agilent", "MRQ-40 - Cell Marque"],
+            "SOX-10": ["EP268 - Cell Marque"],
+            "SOX-11": ["MRQ-58 - Cell Marque"],
+            "STAT6": ["EP325 - Cell Marque"],
+            "TBX21": ["EP263 - Cell Marque"],
+            "TDT": ["EP266 - Agilent", "Policlonal - Cell Marque"],
+            "TFE3": ["MRQ-37 - Cell Marque"],
+            "Tireoglobulina": ["Policlonal - Agilent", "2H11 + 6E1 - Cell Marque"],
+            "TLE-1": ["1F5 - Cell Marque"],
+            "TTF-1": ["8G7G3/1 - Agilent", "8G7G3/1 - Ventana"],
+            "Uroplaquina": ["SP73 - Cell Marque"],
+            "Vimentina": ["V9 - Ventana"],
+            "WT-1": ["6FH2 - Agilent", "6F-H2 - Cell Marque"]
+        };
 
-    function carregarInputsConclusao() {
-        const modeloKey = document.getElementById('select-modelo-conclusao').value;
-        const divInputs = document.getElementById('inputs-dinamicos-conclusao');
-        divInputs.innerHTML = '';
-        if (!modeloKey) {
-            document.getElementById('area-conclusao').innerHTML = '';
-            return;
+        const sugestoesResultados = {
+            "generic": ["POSITIVO nas células neoplásicas", "NEGATIVO nas células neoplásicas"],
+            "Ki-67": ["POSITIVO em ___% das células neoplásicas"],
+            "RE": ["POSITIVO forte em ___% das células neoplásicas", "POSITIVO moderado", "POSITIVO fraco"],
+            "RP": ["POSITIVO forte em ___% das células neoplásicas", "POSITIVO moderado", "POSITIVO fraco"],
+            "HER2": ["ESCORE 0", "ESCORE 1+", "ESCORE 2+", "ESCORE 3+"]
+
+        };
+
+        // Painéis Fixos (Padrão do Sistema)
+        const paineisPadrao = {
+            "MAMA": ["RE", "RP", "Ki-67", "HER2"],
+            "MMR (Instabilidade)": ["MLH1", "MSH2", "MSH6", "PMS2"],
+            "ENDOMÉTRIO": ["MLH1", "MSH2", "MSH6", "PMS2", "p53"],
+            "PULMÃO (Adeno)": ["TTF-1", "p63"],
+            "PROSTATA": ["34βE12", "p63", "Racemase"]
+        };
+
+        // Carregar Painéis do Usuário (localStorage)
+        let paineisUsuario = JSON.parse(localStorage.getItem('guilis_paineis_usuario')) || {};
+
+        // ==========================================
+        // 2. LÓGICA DE INTERFACE E DROPDOWNS
+        // ==========================================
+        let selectedDropdownIndex = -1;
+
+        function handleKeyboardNavigation(e, index, type) {
+            const dropdown = document.querySelector(`#linha-${index} .dropdown-${type}`);
+            if (!dropdown || dropdown.style.display === 'none') return;
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            if (e.key === 'ArrowDown') { e.preventDefault(); selectedDropdownIndex = Math.min(selectedDropdownIndex + 1, items.length - 1); atualizarHighlight(items); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); selectedDropdownIndex = Math.max(selectedDropdownIndex - 1, 0); atualizarHighlight(items); }
+            else if (e.key === 'Enter') { e.preventDefault(); if (selectedDropdownIndex > -1 && items[selectedDropdownIndex]) items[selectedDropdownIndex].click(); }
+            else if (e.key === 'Escape') fecharTodosDropdowns();
         }
-        if (modeloKey === 'generico') {
-            divInputs.innerHTML = `<textarea id="txt-conclusao-livre" rows="4" class="w-full border p-2 text-sm rounded" placeholder="Digite a conclusão aqui..." oninput="atualizarPreviewConclusao()"></textarea>`;
-            return;
-        }
-        const modelo = modelosConclusao[modeloKey];
-        let htmlBuilder = "";
-        modelo.campos.forEach((campo, idx) => {
-            htmlBuilder += `<div class="flex flex-col">
-                <label class="text-[10px] font-bold text-gray-500 uppercase mb-1">${campo.label}</label>
-                <select id="conclusao-inp-${idx}" onchange="atualizarPreviewConclusao()" class="w-full border border-gray-300 p-2 text-sm rounded bg-white focus:border-indigo-500 outline-none">`;
-            campo.opcoes.forEach(op => {
-                htmlBuilder += `<option value="${op}">${op}</option>`;
+
+        function atualizarHighlight(items) {
+            items.forEach((item, idx) => {
+                if (idx === selectedDropdownIndex) { item.style.background = '#eff6ff'; item.scrollIntoView({ block: 'nearest' }); }
+                else item.style.background = '';
             });
-            htmlBuilder += `</select></div>`;
-        });
-        divInputs.innerHTML = htmlBuilder;
-        atualizarPreviewConclusao(); 
-    }
-
-    function atualizarPreviewConclusao() {
-        const modeloKey = document.getElementById('select-modelo-conclusao').value;
-        const areaPreview = document.getElementById('area-conclusao');
-        if (!modeloKey) {
-            areaPreview.innerHTML = '';
-            return;
         }
-        const modelo = modelosConclusao[modeloKey];
-        let htmlFinal = "";
-        if (modeloKey === 'generico') {
-            const txt = document.getElementById('txt-conclusao-livre');
-            if(txt) htmlFinal = `<div class="laudo-texto"><b>CONCLUSÃO</b><br>` + txt.value.replace(/\n/g, "<br>") + `</div>`;
-        } else {
-            const vals = [];
-            modelo.campos.forEach((_, idx) => {
-                const el = document.getElementById(`conclusao-inp-${idx}`);
-                if(el) vals.push(el.value);
+
+        function fecharTodosDropdowns() {
+            selectedDropdownIndex = -1;
+            document.querySelectorAll('.custom-dropdown').forEach(d => {
+                d.style.display = 'none';
+                const input = d.previousElementSibling;
+                if(input) input.classList.remove('input-with-dropdown-active');
             });
-            if(vals.length === modelo.campos.length) {
-                htmlFinal = `<div class="laudo-texto">` + modelo.gerarTexto(vals) + `</div>`;
-                htmlFinal += modelo.textoFixo;
+        }
+
+        document.addEventListener('click', function(e) { if (!e.target.closest('.linha-input')) fecharTodosDropdowns(); });
+
+        function mostrarDropdownAnticorpos(index) {
+            fecharTodosDropdowns();
+            const linha = document.getElementById(`linha-${index}`);
+            const input = linha.querySelector('.ant');
+            const dropdown = linha.querySelector('.dropdown-anticorpos');
+            const termo = input.value.toLowerCase();
+            const filtrados = Object.keys(estoqueIHQ).filter(k => k.toLowerCase().includes(termo)).sort();
+            
+            let html = '';
+            if (filtrados.length === 0) html = '<div class="dropdown-empty">Nenhum encontrado</div>';
+            else filtrados.forEach(ant => html += `<div class="dropdown-item" onclick="selecionarAnticorpo(${index}, '${ant.replace(/'/g, "\\'")}')">${ant}</div>`);
+            
+            dropdown.innerHTML = html; dropdown.style.display = 'block'; input.classList.add('input-with-dropdown-active');
+        }
+
+        function selecionarAnticorpo(index, anticorpo) {
+            const linha = document.getElementById(`linha-${index}`);
+            const input = linha.querySelector('.ant');
+            input.value = anticorpo;
+            fecharTodosDropdowns();
+            processarAnticorpo(index, input);
+            const inputClone = linha.querySelector('.clo');
+            if (!inputClone.disabled) { inputClone.focus(); setTimeout(() => inputClone.click(), 100); }
+        }
+
+        function mostrarDropdownClones(index) {
+            fecharTodosDropdowns();
+            const linha = document.getElementById(`linha-${index}`);
+            const input = linha.querySelector('.clo');
+            if(input.dataset.clones) {
+                const clones = JSON.parse(input.dataset.clones);
+                if(clones.length === 1) { input.value = clones[0]; sincronizar(); return; }
+                const dropdown = linha.querySelector('.dropdown-clones');
+                let html = '';
+                clones.forEach(clone => html += `<div class="dropdown-item" onclick="selecionarClone(${index}, '${clone.replace(/'/g, "\\'")}')">${clone}</div>`);
+                dropdown.innerHTML = html; dropdown.style.display = 'block'; input.classList.add('input-with-dropdown-active');
             }
         }
-        areaPreview.innerHTML = htmlFinal;
-    }
 
-    // ==========================================
-    // 2. ESTOQUE DE ANTICORPOS
-    // ==========================================
-    const estoqueIHQ = {
-        "AML (actina músculo liso)": ["1A4 - Agilent", "1A4 - Cell Marque"],
-        "Alfafetoproteína": ["Policlonal - Cell Marque"],
-        "Anidrase carbônica IX (CA IX)": ["EP161 - Cell Marque"],
-        "ALK1": ["ALK1 – Agilent", "ALK01 - Ventana"],
-        "ALK (D5F3)": ["D5F3 - Ventana"],
-        "BCOR": ["C-10 - Zeta"],
-        "BCL-2": ["124 – Agilent", "124 - Ventana"],
-        "BCL-6": ["PG-B6p – Agilent", "GL191E/A8 - Cell Marque"],
-        "BER-EP4": ["Agilent", "Ber-EP4 - Cell Marque"],
-        "Beta-Catenina": ["β-Catenin-1 – Agilent", "Policlonal - Cell Marque", "14 - Cell Marque"],
-        "Beta-HCG": ["Policlonal - Cell Marque"],
-        "c-KIT (CD117)": ["EP10 - Ventana"],
-        "c-MYC": ["Ventana", "Y69 - Ventana"],
-        "CA125": ["Agilent", "M11 - Agilent", "OC125 - Cell Marque"],
-        "CA19.9": ["121SLE - Cell Marque"],
-        "Calcitonina": ["SP17 - Cell Marque"],
-        "Caldesmon": ["h-CD – Agilent", "E89 - Cell Marque"],
-        "Calponina": ["EP798Y - Cell Marque"],
-        "Calretinina": ["DAK-Calret 1 – Agilent", "SP65 - Ventana"],
-        "Carcinoembrionário (CEA)": ["II-7 – Agilent", "CEA31 - Cell Marque"],
-        "CD1a": ["010 – Agilent", "EP3622 - Cell Marque"],
-        "CD2": ["AB75 – Agilent", "MRQ-11 - Cell Marque"],
-        "CD3": ["policlonal – Agilent", "2GV6 - Ventana"],
-        "CD4": ["4B12 – Agilent", "SP35 - Ventana"],
-        "CD5": ["4C7 – Agilent", "SP19 - Ventana"],
-        "CD7": ["CBC.37 – Agilent", "SP94 - Ventana"],
-        "CD8": ["C8/144B – Agilent", "SP57 - Ventana"],
-        "CD10": ["DAK-CD10 – Agilent", "SP67 - Ventana"],
-        "CD15": ["Carb-3 – Agilent", "MMA - Ventana"],
-        "CD20": ["L26 – Agilent", "L26 - Ventana"],
-        "CD21": ["1F8 – Agilent"],
-        "CD23": ["DAK-CD23 – Agilent", "SP23 - Ventana"],
-        "CD30": ["Ber-H2 – Agilent", "Ber-H2 - Ventana"],
-        "CD31": ["JC70A – Agilent", "JC70 - Cell Marque"],
-        "CD34": ["QBEnd 10 – Agilent", "QBEnd/10 - Ventana"],
-        "CD43": ["DF-T1 – Agilent", "L60 - Ventana"],
-        "CD45": ["2B11 + PD7/26 – Agilent", "2B11 & PD7/26 - Cell Marque"],
-        "CD56": ["123C3 – Agilent", "MRQ-42 - Cell Marque"],
-        "CD57": ["NK1 - Cell Marque"],
-        "CD61": ["2f2 - Cell Marque"],
-        "CD68": ["KP1 – Agilent", "KP1 - Ventana"],
-        "CD79a": ["JCB117 – Agilent", "SP18 - Ventana"],
-        "CD99": ["12E7 - Agilent", "O13 - Ventana"],
-        "CD138": ["MI15 - Agilent", "B-A38 - Cell Marque"],
-        "CDK4": ["EP180 - BIOSB"],
-        "CDX2": ["DAK-CDX2 - Agilent", "EPR2764Y - Cell Marque"],
-        "CEA monoclonal": ["CEA31 - Cell Marque"],
-        "Ciclina D1": ["EP12 - Agilent", "SP4-R - Ventana"],
-        "AE1/AE3 (CK pan)": ["AE1/AE3/PCK26 - Ventana"],
-        "CAM5.2": ["CAM5.2 - Ventana"],
-        "CK 5/6": ["D5/16 B4 - Agilent", "D5/16B4 - Ventana"],
-        "CK 7": ["OV-TL 12/30 - Agilent", "SP52 - Ventana"],
-        "CK 8/18": ["EP17/30 - Agilent", "B22.1 & B23.1 - Cell Marque"],
-        "CK 19": ["RCK108 - Agilent", "A53-B/A2.26 - Cell Marque"],
-        "CK 20": ["Ks20.8 - Agilent", "SP33 - Ventana"],
-        "34βE12": ["34βE12 - Agilent", "34B12 - Ventana"],
-        "Cromogranina A": ["LK2H10 - Ventana"],
-        "DBA44": ["AB779 - Abcam"],
-        "Desmina": ["D33 - Agilent", "DE-R-11 - Ventana"],
-        "DOG1": ["SP31 - Cell Marque"],
-        "E-Caderina": ["NCH-38 - Agilent", "36 - Ventana"],
-        "EMA": ["E29 - Agilent", "E29 - Ventana"],
-        "ERG": ["EPR3864 - Ventana"],
-        "Fator von Willebrand": ["Policlonal - Agilent"],
-        "Fator VIII": ["Policlonal - Cell Marque"],
-        "Fator XIIIa": ["AC-1A1 - Cell Marque"],
-        "FLI-1": ["MRQ-1 - Cell Marque"],
-        "GATA-3": ["L50-823 - Cell Marque"],
-        "GFAP": ["Policlonal - Agilent", "EP672Y - Cell Marque"],
-        "Glutamina Sintetase": ["GS6 - Cell Marque"],
-        "Glypican-3": ["1G12 - Cell Marque"],
-        "H3.3G34W": ["RM263 - RevMAb"],
-        "H3K27me3": ["3C36B11 - Cell Marque"],
-        "H3K36M": ["RM193 - RevMAb"],
-        "Hepatocyte": ["OCH1E5 - Agilent", "OCH1E5 - Cell Marque"],
-        "HER2": ["4B5 - Ventana"],
-        "HHV8": ["13B10 - Cell Marque"],
-        "INI-1": ["MRQ-27 - Cell Marque"],
-        "Inibina": ["R1 - Agilent"],
-        "Kappa": ["Policlonal - Agilent", "Policlonal - Ventana"],
-        "Ki-67": ["MIB1 - Agilent", "30-9 - Ventana"],
-        "Lambda": ["Policlonal - Agilent", "Policlonal - Ventana"],
-        "LEF1": ["EP310 - Cell Marque"],
-        "Melan-A": ["A103 - Agilent", "A103 - Ventana"],
-        "Melanossomo (HMB45)": ["HMB45 - Agilent", "HMB45 - Ventana"],
-        "MDM2": ["IF2 - Cell Marque"],
-        "Mesothelial Cells (HBME-1)": ["HBME-1 - Cell Marque"],
-        "MLH1": ["ES05 - Agilent", "M1 - Ventana"],
-        "MSH2": ["FE11 - Agilent", "G219-1129 - Ventana"],
-        "MSH6": ["EP49 - Agilent", "EP49 - Ventana"],
-        "PMS2": ["EP51 - Agilent", "A16-4 - Ventana"],
-        "MUM1": ["MUM1p - Agilent", "MRQ-43 - Cell Marque"],
-        "Mieloperoxidase": ["Policlonal - Agilent", "Policlonal - Cell Marque"],
-        "Miogenina": ["F5D - Agilent", "F5D - Cell Marque"],
-        "MyoD1": ["EP212 - Cell Marque"],
-        "Napsina A": ["MRQ-60 - Cell Marque"],
-        "NKX2.2": ["EP336 - Cell Marque"],
-        "NKX3.1": ["EP356 - Cell Marque"],
-        "Oct-2": ["MRQ-2 - Cell Marque"],
-        "OCT3/4": ["N1NK - Agilent", "MRQ-10 - Cell Marque"],
-        "p16": ["E6H4 - Ventana"],
-        "p40": ["DAK-p40 - Agilent", "BC28 - Ventana"],
-        "p53": ["DO-7 - Agilent", "DO-7 - Cell Marque"],
-        "p63": ["DAK-p63 - Agilent", "4A4 - Ventana"],
-        "PAX-5": ["DAK-Pax5 - Agilent", "SP34 - Ventana"],
-        "PAX-8": ["MRQ-50 - Cell Marque"],
-        "PD-L1": ["22C3 - Dako", "SP243 - Ventana", "SP152 - Ventana"],
-        "PLAP": ["8A9 - Agilent", "NB10 - Cell Marque"],
-        "Podoplanina (D2-40)": ["D2-40 - Cell Marque"],
-        "PSA": ["3E6 - Agilent", "Policlonal - Ventana"],
-        "PSAP": ["PASE/4LI - Cell Marque"],
-        "Racemase": ["13H4 - Agilent", "SP116 - Ventana"],
-        "RA": ["SP107 - Cell Marque"],
-        "RE": ["EP1 - Agilent", "SP1 - Ventana"],
-        "RP": ["PgR 636 - Agilent", "1E2 - Ventana"],
-        "ROS1": ["SP384 - Ventana"],
-        "S100": ["Policlonal - Agilent", "4C4.9 - Ventana"],
-        "SALL-4": ["6E3 - Cell Marque"],
-        "SATB2": ["EP281 - Cell Marque"],
-        "SF-1": ["EP434 - Cell Marque"],
-        "Sinaptofisina": ["DAK-SYNAP - Agilent", "MRQ-40 - Cell Marque"],
-        "SOX-10": ["EP268 - Cell Marque"],
-        "SOX-11": ["MRQ-58 - Cell Marque"],
-        "STAT6": ["EP325 - Cell Marque"],
-        "TBX21": ["EP263 - Cell Marque"],
-        "TDT": ["EP266 - Agilent", "Policlonal - Cell Marque"],
-        "TFE3": ["MRQ-37 - Cell Marque"],
-        "Tireoglobulina": ["Policlonal - Agilent", "2H11 + 6E1 - Cell Marque"],
-        "TLE-1": ["1F5 - Cell Marque"],
-        "TTF-1": ["8G7G3/1 - Agilent", "8G7G3/1 - Ventana"],
-        "Uroplaquina": ["SP73 - Cell Marque"],
-        "Vimentina": ["V9 - Ventana"],
-        "WT-1": ["6FH2 - Agilent", "6F-H2 - Cell Marque"]
-    };
+        function selecionarClone(index, clone) {
+            const linha = document.getElementById(`linha-${index}`);
+            linha.querySelector('.clo').value = clone;
+            fecharTodosDropdowns(); sincronizar();
+            const res = linha.querySelector('.res'); if(res) res.focus();
+        }
 
+        function mostrarDropdownResultados(index) {
+            fecharTodosDropdowns();
+            const linha = document.getElementById(`linha-${index}`);
+            const ant = linha.querySelector('.ant').value.trim();
+            const dropdown = linha.querySelector('.dropdown-resultados');
+            
+            let html = '';
+            const sugs = [...(sugestoesResultados[ant] || []), ...sugestoesResultados.generic];
+            if(sugestoesResultados[ant]) html += `<div class="dropdown-label">Sugestões para ${ant}</div>`;
+            sugs.forEach(s => html += `<div class="dropdown-item" onclick="selecionarResultado(${index}, '${s.replace(/'/g, "\\'")}')">${s}</div>`);
+            
+            dropdown.innerHTML = html; dropdown.style.display = 'block'; linha.querySelector('.res').classList.add('input-with-dropdown-active');
+        }
 
-    // ==========================================
-    // 3. PAINÉIS PADRONIZADOS
-    // ==========================================
-    const paineisPadrao = {
-        "MAMA": ["RE", "RP", "Ki-67", "HER2"],
-        "MMR (Instabilidade)": ["MLH1", "MSH2", "MSH6", "PMS2"],
-        "ENDOMÉTRIO" : ["MLH1", "MSH2", "MSH6", "PMS2", "p53"],
-        "PULMÃO (Adeno)": ["TTF-1", "p63"],
-        "PROSTATA": ["34βE12", "p63", "Racemase"]
-    };
+        function selecionarResultado(index, texto) {
+            const input = document.getElementById(`linha-${index}`).querySelector('.res');
+            input.value = texto;
+            if(texto.includes('___')) { const p = texto.indexOf('___'); input.focus(); input.setSelectionRange(p, p+3); }
+            fecharTodosDropdowns(); sincronizar();
+        }
 
-
-    // ==========================================
-    // 4. LÓGICA DO SISTEMA
-    // ==========================================
-    
-    function popularDatalist(t) {
-        const dl = document.getElementById('lista-anticorpos-estoque');
-        dl.innerHTML = '';
-        Object.keys(estoqueIHQ).sort().filter(k => k.toLowerCase().includes(t.toLowerCase())).forEach(k => {
-            const opt = document.createElement('option');
-            opt.value = k;
-            dl.appendChild(opt);
-        });
-    }
-
-    function atualizarSelectPaineis() {
-        const select = document.getElementById('select-paineis-ui');
-        select.innerHTML = '<option value="">Selecione um painel para carregar...</option>';
-        Object.keys(paineisPadrao).sort().forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p;
-            opt.innerText = p.toUpperCase();
-            select.appendChild(opt);
-        });
-    }
-
-    function aplicarPainel(id) {
-        if(!id || !paineisPadrao[id]) return;
-        const lista = paineisPadrao[id];
-        const linhas = document.querySelectorAll('.linha-input');
-        let pIdx = 0;
-        for(let i = 0; i < linhas.length && pIdx < lista.length; i++) {
-            const input = linhas[i].querySelector('.ant');
-            if(input.value === "") { 
-                input.value = lista[pIdx]; 
-                processarInput(i, input); 
-                pIdx++; 
+        function processarAnticorpo(index, elemento) {
+            const valor = elemento.value.trim();
+            const linha = document.getElementById(`linha-${index}`);
+            const inputClone = linha.querySelector('.clo');
+            const spanErro = linha.querySelector('.msg-erro');
+            const chave = Object.keys(estoqueIHQ).find(k => k.toLowerCase() === valor.toLowerCase());
+            
+            if (chave) {
+                elemento.classList.remove('erro-input');
+                spanErro.style.display = 'none';
+                inputClone.disabled = false;
+                inputClone.dataset.clones = JSON.stringify(estoqueIHQ[chave]);
+                inputClone.value = estoqueIHQ[chave].length === 1 ? estoqueIHQ[chave][0] : '';
+            } else {
+                elemento.classList.add('erro-input');
+                spanErro.style.display = (valor === "") ? 'none' : 'block';
+                inputClone.disabled = true; inputClone.value = '';
             }
-        }
-        while(pIdx < lista.length) {
-            adicionarLinha();
-            const novas = document.querySelectorAll('.linha-input');
-            const input = novas[novas.length-1].querySelector('.ant');
-            input.value = lista[pIdx]; 
-            processarInput(novas.length-1, input); 
-            pIdx++;
-        }
-    }
-
-    function criarLinhaUI(index) {
-        const div = document.createElement('div');
-        div.className = 'flex gap-1 items-start linha-input relative mb-1';
-        div.id = `linha-${index}`;
-        div.innerHTML = `
-            <div class="flex flex-col w-[25%] relative">
-                <input type="text" list="lista-anticorpos-estoque" placeholder="Ant..." oninput="processarInput(${index}, this)" class="ant border p-2 rounded w-full text-sm outline-none bg-white">
-                <span class="msg-erro">Erro</span>
-            </div>
-            <select onchange="sincronizar()" class="clo border p-2 rounded w-[35%] text-sm outline-none bg-white" disabled><option value="">---</option></select>
-            <input type="text" placeholder="Result" oninput="sincronizar()" class="res border p-2 rounded w-[40%] text-sm outline-none">
-        `;
-        return div;
-    }
-
-    function processarInput(index, elemento) {
-        const valor = elemento.value;
-        const linha = document.getElementById(`linha-${index}`);
-        const selectClo = linha.querySelector('.clo');
-        const spanErro = linha.querySelector('.msg-erro');
-        popularDatalist(valor);
-        const chave = Object.keys(estoqueIHQ).find(k => k.toLowerCase() === valor.toLowerCase());
-        if (chave) {
-            elemento.classList.remove('erro-input'); spanErro.style.display = 'none';
-            selectClo.disabled = false; selectClo.innerHTML = '';
-            if (estoqueIHQ[chave].length === 1) selectClo.innerHTML = `<option value="${estoqueIHQ[chave][0]}" selected>${estoqueIHQ[chave][0]}</option>`;
-            else {
-                selectClo.innerHTML = '<option value="">CLONE?</option>';
-                estoqueIHQ[chave].forEach(o => selectClo.innerHTML += `<option value="${o}">${o}</option>`);
-            }
-        } else {
-            elemento.classList.add('erro-input'); spanErro.style.display = (valor==="") ? 'none' : 'block';
-            selectClo.disabled = true; selectClo.innerHTML = '<option value="">---</option>';
-        }
-        sincronizar();
-    }
-
-    function sincronizar() {
-        const b = "1.8pt solid black";
-        let h = `<table style="border-collapse:collapse; width:523pt; font-family:'Trade Gothic Next Rounded', Arial, sans-serif; border:${b}; table-layout:fixed;">`;
-        h += `<tr style="background:#D9D9D9; font-weight:bold; height:21.5pt;"><th style="border:${b}; width:80pt; font-size:14px; vertical-align:middle; text-align:left; padding-left:8px;">ANTICORPO</th><th style="border:${b}; width:129pt; font-size:14px; vertical-align:middle; text-align:left; padding-left:8px;">CLONE-FABRICANTE</th><th style="border:${b}; width:314pt; font-size:14px; vertical-align:middle; text-align:left; padding-left:8px;">RESULTADO</th></tr>`;
-        document.querySelectorAll('.linha-input').forEach(div => {
-            const a = div.querySelector('.ant').value; const c = div.querySelector('.clo').value; const r = div.querySelector('.res').value;
-            const chave = Object.keys(estoqueIHQ).find(k => k.toLowerCase() === a.toLowerCase());
-            if (chave) h += `<tr style="height:15pt;"><td style="border:${b}; padding:0 8px; font-size:14px; vertical-align:middle;">${chave}</td><td style="border:${b}; padding:0 8px; font-size:14px; vertical-align:middle;">${c}</td><td style="border:${b}; padding:0 8px; font-size:14px; vertical-align:middle;">${r}</td></tr>`;
-        });
-        document.getElementById('area-tabela').innerHTML = h + `</table>`;
-    }
-
-    function adicionarLinha() { const c = document.getElementById('container-inputs'); c.appendChild(criarLinhaUI(c.children.length)); }
-    function abrirModal() { 
-        document.getElementById('modalPaineis').style.display = 'flex'; 
-        const cont = document.getElementById('listaPaineisVisual');
-        cont.innerHTML = '';
-        Object.keys(paineisPadrao).sort().forEach(k => {
-            cont.innerHTML += `<div class="p-3 border-b text-xs"><b>${k}</b>: ${paineisPadrao[k].join(', ')}</div>`;
-        });
-    }
-    function fecharModal() { document.getElementById('modalPaineis').style.display = 'none'; }
-    
-    function limparTabela() {
-        if(confirm("Limpar toda a tela?")){
-            // 1. Reset Table Inputs
-            document.getElementById('container-inputs').innerHTML = '';
-            for(let i=0; i<8; i++) adicionarLinha();
             sincronizar();
-
-            // 2. Reset Conclusion Section
-            document.getElementById('select-modelo-conclusao').value = ""; 
-            document.getElementById('inputs-dinamicos-conclusao').innerHTML = ""; 
-            document.getElementById('area-conclusao').innerHTML = ""; 
         }
-    }
-    
-    function copiarCompleto() {
-        const conteudo = document.getElementById('documento-final').innerHTML;
-        const b = new Blob([conteudo], { type: "text/html" });
-        navigator.clipboard.write([new ClipboardItem({ "text/html": b })]).then(() => alert("LAUDO COMPLETO COPIADO!"));
-    }
 
-    // LIMPANDO LOCALSTORAGE
-    localStorage.removeItem('guilis_estoque');
-    localStorage.removeItem('guilis_paineis');
+        // ==========================================
+        // 3. SINCRONIZAÇÃO E TABELA
+        // ==========================================
+        function sincronizar() {
+            const b = "1.8pt solid black";
+            let h = `<table style="border-collapse:collapse; width:523pt; font-family:'Trade Gothic Next Rounded', Arial, sans-serif; border:${b}; table-layout:fixed;">`;
+            h += `<tr style="background:#D9D9D9; font-weight:bold; height:21.5pt;"><th style="border:${b}; width:80pt; font-size:14px; text-align:left; padding-left:8px;">ANTICORPO</th><th style="border:${b}; width:129pt; font-size:14px; text-align:left; padding-left:8px;">CLONE-FABRICANTE</th><th style="border:${b}; width:314pt; font-size:14px; text-align:left; padding-left:8px;">RESULTADO</th></tr>`;
+            
+            let temLinhas = false;
+            document.querySelectorAll('.linha-input').forEach(div => {
+                const a = div.querySelector('.ant').value.trim();
+                const c = div.querySelector('.clo').value;
+                const r = div.querySelector('.res').value;
+                const chave = Object.keys(estoqueIHQ).find(k => k.toLowerCase() === a.toLowerCase());
+                if (chave) {
+                    h += `<tr style="height:15pt;"><td style="border:${b}; padding:0 8px; font-size:14px;">${chave}</td><td style="border:${b}; padding:0 8px; font-size:14px;">${c}</td><td style="border:${b}; padding:0 8px; font-size:14px;">${r}</td></tr>`;
+                    temLinhas = true;
+                }
+            });
+            document.getElementById('area-tabela').innerHTML = temLinhas ? h + `</table>` : '';
+        }
 
-    atualizarSelectPaineis();
-    for(let i=0; i<8; i++) adicionarLinha();
-    sincronizar();
+        function criarLinhaUI(index) {
+            const div = document.createElement('div');
+            div.className = 'flex gap-1 items-start linha-input relative mb-1';
+            div.id = `linha-${index}`;
+            div.innerHTML = `
+                <div class="flex flex-col w-[25%] relative">
+                    <input type="text" placeholder="Anticorpo..." oninput="processarAnticorpo(${index}, this); mostrarDropdownAnticorpos(${index})" onfocus="mostrarDropdownAnticorpos(${index})" onkeydown="handleKeyboardNavigation(event, ${index}, 'anticorpos')" class="ant border p-2 rounded w-full text-sm outline-none bg-white focus:border-blue-500">
+                    <div class="custom-dropdown dropdown-anticorpos"></div>
+                    <span class="msg-erro">Não cadastrado</span>
+                </div>
+                <div class="clone-container w-[35%] relative">
+                    <input type="text" placeholder="---" readonly onfocus="if(!this.disabled) mostrarDropdownClones(${index})" onclick="if(!this.disabled) mostrarDropdownClones(${index})" onkeydown="handleKeyboardNavigation(event, ${index}, 'clones')" class="clo border p-2 rounded w-full text-sm outline-none bg-gray-50 cursor-pointer focus:border-blue-500" disabled>
+                    <div class="custom-dropdown dropdown-clones"></div>
+                </div>
+                <div class="w-[40%] relative">
+                    <input type="text" placeholder="Resultado" onfocus="mostrarDropdownResultados(${index})" oninput="sincronizar()" onkeydown="handleKeyboardNavigation(event, ${index}, 'resultados')" class="res border p-2 rounded w-full text-sm outline-none focus:border-blue-500">
+                    <div class="custom-dropdown dropdown-resultados"></div>
+                </div>`;
+            return div;
+        }
+
+        function adicionarLinha() {
+            const c = document.getElementById('container-inputs');
+            c.appendChild(criarLinhaUI(c.children.length));
+        }
+
+        function limparTabela() {
+            if(confirm("Limpar tela?")) {
+                document.getElementById('container-inputs').innerHTML = '';
+                for(let i=0; i<8; i++) adicionarLinha();
+                sincronizar();
+            }
+        }
+
+        function copiarTabela() {
+            const conteudo = document.getElementById('area-tabela').innerHTML;
+            if (!conteudo) return alert("Tabela vazia!");
+            const b = new Blob([conteudo], { type: "text/html" });
+            navigator.clipboard.write([new ClipboardItem({ "text/html": b })]).then(() => alert("Copiado!"));
+        }
+
+        // ==========================================
+        // 4. GERENCIAMENTO DE PAINÉIS (PADRÃO + USUÁRIO)
+        // ==========================================
+        
+        function getTodosPaineis() {
+            return { ...paineisPadrao, ...paineisUsuario };
+        }
+
+        function atualizarSelectPaineis() {
+            const select = document.getElementById('select-paineis-ui');
+            select.innerHTML = '<option value="">Selecione um painel...</option>';
+            const todos = getTodosPaineis();
+            
+            // Grupo Padrão
+            const optGroupPadrao = document.createElement('optgroup');
+            optGroupPadrao.label = "PADRÃO HUOL";
+            Object.keys(paineisPadrao).sort().forEach(k => {
+                const opt = document.createElement('option'); opt.value = k; opt.innerText = k.toUpperCase().replace(/_/g, " ");
+                optGroupPadrao.appendChild(opt);
+            });
+            select.appendChild(optGroupPadrao);
+
+            // Grupo Usuário
+            if(Object.keys(paineisUsuario).length > 0) {
+                const optGroupUser = document.createElement('optgroup');
+                optGroupUser.label = "MEUS PAINÉIS";
+                Object.keys(paineisUsuario).sort().forEach(k => {
+                    const opt = document.createElement('option'); opt.value = k; opt.innerText = k.toUpperCase();
+                    optGroupUser.appendChild(opt);
+                });
+                select.appendChild(optGroupUser);
+            }
+        }
+
+        function aplicarPainel(id) {
+            const todos = getTodosPaineis();
+            if(!id || !todos[id]) return;
+            const lista = todos[id];
+            
+            // Limpa tabela atual antes de aplicar (opcional, mas recomendado para evitar mistura)
+            document.getElementById('container-inputs').innerHTML = '';
+            
+            lista.forEach(ant => {
+                adicionarLinha();
+                const linhas = document.querySelectorAll('.linha-input');
+                const last = linhas[linhas.length-1];
+                const input = last.querySelector('.ant');
+                input.value = ant;
+                processarAnticorpo(linhas.length-1, input);
+            });
+            
+            // Adiciona algumas linhas extras vazias
+            for(let i=0; i<3; i++) adicionarLinha();
+        }
+
+        // MODAL E EDIÇÃO
+        function abrirModal() {
+            document.getElementById('modalPaineis').style.display = 'flex';
+            renderizarListaModal();
+        }
+
+        function fecharModal() {
+            document.getElementById('modalPaineis').style.display = 'none';
+        }
+
+        function renderizarListaModal() {
+            const cont = document.getElementById('listaPaineisVisual');
+            cont.innerHTML = '';
+            
+            // Painéis do Usuário (Com botão excluir)
+            if(Object.keys(paineisUsuario).length > 0) {
+                cont.innerHTML += `<div class="p-3 bg-blue-50 text-xs font-bold text-blue-800 uppercase border-b">Meus Painéis Salvos</div>`;
+                Object.keys(paineisUsuario).sort().forEach(k => {
+                    cont.innerHTML += `
+                        <div class="p-3 border-b flex justify-between items-center bg-white hover:bg-gray-50">
+                            <div>
+                                <b class="text-gray-800">${k}</b>
+                                <p class="text-[10px] text-gray-500 mt-1">${paineisUsuario[k].join(', ')}</p>
+                            </div>
+                            <button onclick="excluirPainel('${k}')" class="text-red-500 hover:bg-red-100 p-2 rounded">🗑️</button>
+                        </div>`;
+                });
+            }
+
+            // Painéis Padrão (Apenas leitura)
+            cont.innerHTML += `<div class="p-3 bg-gray-100 text-xs font-bold text-gray-600 uppercase border-b mt-4">Painéis Padrão (Fixo)</div>`;
+            Object.keys(paineisPadrao).sort().forEach(k => {
+                cont.innerHTML += `
+                    <div class="p-3 border-b text-sm text-gray-500">
+                        <b>${k.replace(/_/g, " ")}</b>: ${paineisPadrao[k].join(', ')}
+                    </div>`;
+            });
+        }
+
+        function salvarNovoPainel() {
+            const nomeInput = document.getElementById('novo-painel-nome');
+            const nome = nomeInput.value.trim().toUpperCase();
+            
+            if(!nome) return alert("Digite um nome para o painel.");
+            if(paineisPadrao[nome]) return alert("Este nome é reservado pelo sistema.");
+            
+            // Coletar anticorpos válidos da tabela atual
+            const lista = [];
+            document.querySelectorAll('.linha-input').forEach(div => {
+                const val = div.querySelector('.ant').value.trim();
+                const chave = Object.keys(estoqueIHQ).find(k => k.toLowerCase() === val.toLowerCase());
+                if(chave) lista.push(chave);
+            });
+
+            if(lista.length === 0) return alert("A tabela está vazia ou não tem anticorpos válidos reconhecidos.");
+
+            // Salvar
+            paineisUsuario[nome] = lista;
+            localStorage.setItem('guilis_paineis_usuario', JSON.stringify(paineisUsuario));
+            
+            alert(`Painel "${nome}" salvo com sucesso!`);
+            nomeInput.value = '';
+            atualizarSelectPaineis();
+            renderizarListaModal();
+        }
+
+        function excluirPainel(nome) {
+            if(confirm(`Excluir o painel "${nome}"?`)) {
+                delete paineisUsuario[nome];
+                localStorage.setItem('guilis_paineis_usuario', JSON.stringify(paineisUsuario));
+                atualizarSelectPaineis();
+                renderizarListaModal();
+            }
+        }
+
+        // Inicialização
+        atualizarSelectPaineis();
+        for(let i=0; i<8; i++) adicionarLinha();
+        sincronizar();
+
     </script>
 </body>
 </html>
