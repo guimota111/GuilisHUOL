@@ -180,7 +180,14 @@
             }
         });
     }
-    
+
+    // NOVA FUNÇÃO: Atualiza a memória E as áreas de exportação
+    function atualizarResidenteManual(dIndex, iIndex, novoNome) {
+        escalaPorDia[dIndex][iIndex].residente = novoNome;
+        renderBalanceamento();
+        renderEscala(true); // Chamada especial que não reconstrói o HTML do Sidebar (para não perder o foco)
+    }
+
     function adicionarAoPool() { const i = document.getElementById('novo-nome'); if(i.value){ residentes.push(i.value); i.value=''; renderPool(); renderBalanceamento(); localStorage.setItem('guilis_residentes', JSON.stringify(residentes)); } }
     function removerDoPool(i) { if(confirm("Remover residente?")){ residentes.splice(i,1); renderPool(); renderBalanceamento(); localStorage.setItem('guilis_residentes', JSON.stringify(residentes)); } }
     function renderPool() { document.getElementById('pool-residentes').innerHTML = residentes.map((r, i) => `<div class="pool-item"><span>${r}</span><span style="cursor:pointer;color:#e74c3c;font-weight:bold;" onclick="removerDoPool(${i})">×</span></div>`).join(''); }
@@ -206,10 +213,7 @@
         document.getElementById('section-notas').style.display = ids.length > 0 ? 'block' : 'none';
         document.getElementById('notas-exclusao-input').innerHTML = ids.map(id => {
             const p = id.split('-'); const meta = configTipos[p[0]];
-            // Lógica de "espelho" para a label da caixa de repetição
-            // Se estou excluindo HUOL, pergunto sobre LIGA
             const instContraria = (meta.i === 'HUOL') ? 'LIGA' : 'HUOL';
-            
             return `
                 <div class="nota-input-wrapper">
                     <span style="color:#f1c40f;font-size:0.75rem;">${meta.l} ${p[1]} ${meta.i} igual à ${instContraria}:</span>
@@ -274,25 +278,27 @@
     }
     function handleDragEnd(e) { e.target.style.opacity = '1'; }
 
-    function renderEscala() {
+    function renderEscala(apenasExport = false) {
         const container = document.getElementById('escala-result');
         const datas = Array.from(document.querySelectorAll('.data-input')).map(i => i.value);
         const exportContainer = document.getElementById('escala-grid-export');
         
-        container.innerHTML = '';
+        if(!apenasExport) container.innerHTML = '';
         exportContainer.innerHTML = '';
 
         escalaPorDia.forEach((itens, dIndex) => {
             const dataF = datas[dIndex] ? new Date(datas[dIndex] + 'T00:00:00').toLocaleDateString('pt-BR') : `Data ${dIndex + 1}`;
             
-            // TELA
-            let htmlTela = `<div class="dia-bloco" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${dIndex})"><div class="dia-titulo">📅 ${dataF} (${itens.length} itens)</div>`;
-            itens.forEach((item, iIndex) => {
-                htmlTela += `<div class="item-escala" draggable="true" ondragstart="handleDragStart(event, ${dIndex}, ${iIndex})" ondragend="handleDragEnd(event)"><span style="font-weight:600;">${item.label}</span><select class="select-edit" onchange="escalaPorDia[${dIndex}][${iIndex}].residente=this.value; renderBalanceamento();">${residentes.map(r => `<option value="${r}" ${r===item.residente?'selected':''}>${r}</option>`).join('')}</select></div>`;
-            });
-            container.innerHTML += htmlTela + `</div>`;
+            // ATUALIZAÇÃO DA TELA (SOMENTE SE NÃO FOR APENAS EXPORT)
+            if(!apenasExport) {
+                let htmlTela = `<div class="dia-bloco" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${dIndex})"><div class="dia-titulo">📅 ${dataF} (${itens.length} itens)</div>`;
+                itens.forEach((item, iIndex) => {
+                    htmlTela += `<div class="item-escala" draggable="true" ondragstart="handleDragStart(event, ${dIndex}, ${iIndex})" ondragend="handleDragEnd(event)"><span style="font-weight:600;">${item.label}</span><select class="select-edit" onchange="atualizarResidenteManual(${dIndex}, ${iIndex}, this.value)">${residentes.map(r => `<option value="${r}" ${r===item.residente?'selected':''}>${r}</option>`).join('')}</select></div>`;
+                });
+                container.innerHTML += htmlTela + `</div>`;
+            }
 
-            // EXPORT
+            // ATUALIZAÇÃO DO EXPORT (SEMPRE ACONTECE)
             let htmlExport = `<div class="dia-export"><div class="dia-header-export">📅 ${dataF}</div>`;
             itens.forEach(item => htmlExport += `<div class="item-export"><span>${item.label}</span><strong>${item.residente}</strong></div>`);
             exportContainer.innerHTML += htmlExport + `</div>`;
@@ -304,14 +310,12 @@
         escalaPorDia.flat().forEach(item => { if(stats[item.residente]) stats[item.residente][item.tipo]++; });
         const max = Math.max(...residentes.map(r => stats[r].caso + stats[r].teor), 1);
         
-        // SIDEBAR
         document.getElementById('balanceamento-sidebar').innerHTML = residentes.map(r => `
             <div class="stat-card-picq sidebar-stat" style="background:rgba(255,255,255,0.1); color:white;">
                 <strong>${r}</strong>: ${stats[r].caso} Casos / ${stats[r].teor} Questões
                 <div class="stat-bar-container"><div class="stat-mini-bar"><div class="stat-fill-casos" style="width:${(stats[r].caso/max)*100}%"></div></div><div class="stat-mini-bar"><div class="stat-fill-teor" style="width:${(stats[r].teor/max)*100}%"></div></div></div>
             </div>`).join('');
             
-        // EXPORT
         document.getElementById('balanceamento-export').innerHTML = residentes.map(r => `
             <div class="stat-card-export">
                 <strong style="font-size:1.1rem; color:#2c3e50;">${r}</strong><div style="font-size:0.9rem; margin-top:5px; color:#555;">${stats[r].caso} Casos / ${stats[r].teor} Questões</div><div class="stat-bar-container" style="margin-top:8px;"><div class="stat-mini-bar" style="background:#ddd;"><div class="stat-fill-casos" style="width:${(stats[r].caso/max)*100}%"></div></div><div class="stat-mini-bar" style="background:#ddd;"><div class="stat-fill-teor" style="width:${(stats[r].teor/max)*100}%"></div></div></div>
@@ -322,19 +326,13 @@
         const box = document.getElementById('capture-report');
         const ids = Object.keys(excluidas).sort();
         box.style.display = ids.length > 0 ? 'block' : 'none';
-        
         document.getElementById('lista-exclusoes').innerHTML = ids.map(id => {
             const p = id.split('-'); const meta = configTipos[p[0]];
             const instDestino = (meta.i === 'HUOL') ? 'LIGA' : 'HUOL';
             const tipoDestino = (meta.l === 'Caso') ? 'CASO' : 'QUESTÃO';
             const ed = excluidas[id].ed || "???";
             const q = excluidas[id].q || "?";
-            
-            return `
-            <div class="report-item">
-                <span class="report-q">${meta.l} ${p[1]} ${meta.i}:</span>
-                <span>Igual a(o) <strong>${tipoDestino} ${q} ${instDestino} - PICQ ${ed}</strong></span>
-            </div>`;
+            return `<div class="report-item"><span class="report-q">${meta.l} ${p[1]} ${meta.i}:</span><span>Igual a(o) <strong>${tipoDestino} ${q} ${instDestino} - PICQ ${ed}</strong></span></div>`;
         }).join('');
     }
 
@@ -344,7 +342,7 @@
         container.innerHTML = '';
         for(let i=1; i<=n; i++) {
             const input = document.createElement('input'); input.type = 'date'; input.className = 'data-input'; input.style.marginTop = '5px'; 
-            input.onchange = renderEscala; 
+            input.onchange = () => renderEscala(); 
             container.appendChild(input);
         }
     }
