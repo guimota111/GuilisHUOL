@@ -6,10 +6,9 @@
     <meta http-equiv="pragma" content="no-cache">
     <meta http-equiv="expires" content="0">
     
-    <title>GUILIS v2.5 - Escala Inteligente</title>
+    <title>GUILIS - Escala Inteligente</title>
 
     <script>
-        // Força o carregamento da biblioteca sem usar cache antigo
         document.write('<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js?v=' + Date.now() + '"><\/script>');
     </script>
 
@@ -22,9 +21,39 @@
             --cor-macro: #e67e22; 
         }
 
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; background: #f0f0f0; height: 100vh; overflow: hidden; }
-        #sidebar { width: 320px; background: #2c3e50; color: white; padding: 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
-        #main-content { flex: 1; padding: 10px; overflow-y: auto; height: 100vh; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; flex-direction: column; background: #f0f0f0; height: 100vh; overflow: hidden; }
+
+        /* ── BARRA DE AÇÕES (NOVA) ── */
+        #action-bar {
+            display: flex;
+            gap: 8px;
+            background: #1a252f;
+            padding: 8px 16px;
+            align-items: center;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        #action-bar span { color: #aaa; font-size: 0.8rem; font-weight: bold; margin-right: 4px; }
+        .ab-btn {
+            padding: 7px 14px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.82rem;
+            width: auto;
+            margin: 0;
+        }
+        .ab-magic  { background: #f39c12; color: white; border: 2px solid #fff3; }
+        .ab-clear  { background: #c0392b; color: white; }
+        .ab-copy   { background: #8e44ad; color: white; }
+        .ab-status { background: #2980b9; color: white; }
+
+        /* ── LAYOUT PRINCIPAL ── */
+        #body-row { display: flex; flex: 1; overflow: hidden; }
+        #sidebar { width: 300px; background: #2c3e50; color: white; padding: 16px; height: 100%; overflow-y: auto; box-sizing: border-box; flex-shrink: 0; }
+        #main-content { flex: 1; padding: 10px; overflow-y: auto; }
+
         .container { max-width: 1000px; margin: auto; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .nav-header { padding: 8px; background: #fff; border-bottom: 1px solid #ddd; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
         .nav-header a { text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.85rem; }
@@ -39,11 +68,39 @@
         .micro-row { background-color: #e8f5e9 !important; min-height: 65px; height: auto; }
         .macro-row { background-color: #fff9c4 !important; min-height: 65px; height: auto; }
         
-        .badge-nome { background: transparent; padding: 1px 4px; font-size: 1.05rem; margin: 1px; display: inline-flex; align-items: center; font-weight: 700; color: #000; white-space: nowrap; }
-        .btn-rm-nome { color: #e74c3c; cursor: pointer; margin-left: 4px; font-weight: bold; font-size: 1rem; }
+        /* ── BADGES: empilhados verticalmente ── */
+            .sombra-row { background: transparent; }
+            .sombra-row .badge-nome { font-style: italic; opacity: 0.95; }
+        #lista-semanas td > div[id^="badges-"] {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+        }
+        .badge-nome {
+            background: transparent;
+            padding: 1px 4px;
+            font-size: 1.0rem;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 700;
+            color: #000;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        /* Botão X — visível no app, oculto na exportação */
+        .btn-rm-nome {
+            color: #e74c3c;
+            cursor: pointer;
+            margin-left: 4px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .hide-for-export { display: none !important; }
+
         .input-cell { width: 100%; border: none; background: transparent; text-align: center; font-size: 0.9rem; outline: none; }
 
-        /* ESTILO SIDEBAR (TELA) */
+        /* ── SIDEBAR ── */
         .stat-card { background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); }
         .stat-card strong { display: block; margin-bottom: 4px; font-size: 0.9rem; color: white; }
         .stat-row { display: flex; align-items: center; margin-bottom: 3px; font-size: 0.75rem; color: #ccc; }
@@ -52,7 +109,7 @@
         .stat-bar-fill { height: 100%; }
         .stat-count { width: 15px; text-align: right; font-weight: bold; color: white; }
         
-        /* ESTILO EXPORTAÇÃO (IMAGEM) */
+        /* ── ESTILO EXPORTAÇÃO ── */
         .img-mode .stat-card { background: #76abdf !important; border: 2px solid #000 !important; }
         .img-mode .stat-card strong, .img-mode .stat-count, .img-mode .stat-label { color: #000 !important; font-weight: bold; }
         .img-mode .stat-bar-bg { background: #ddd !important; border: 1px solid #999; }
@@ -61,60 +118,79 @@
         .fill-micro { background-color: var(--cor-micro) !important; }
         .fill-macro { background-color: var(--cor-macro) !important; }
 
-        #autocomplete-list { position: absolute; background: white; border: 1px solid #000; z-index: 1000; width: 160px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        /* ── CRÉDITO ── */
+        #credit-line {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #000;
+            font-weight: 700;
+            margin-top: 8px;
+            letter-spacing: 0.02em;
+        }
+
+        /* ── AUTOCOMPLETE ── */
+        #autocomplete-list { position: fixed; background: white; border: 1px solid #000; z-index: 1000; width: 160px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .sugestao-item { padding: 10px; cursor: pointer; color: #333; font-size: 0.85rem; border-bottom: 1px solid #eee; }
         .sugestao-item:hover { background: var(--primary); color: white; }
 
-        button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        button { width: 100%; padding: 10px; margin-top: 6px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
         .btn-add { background: #27ae60; color: white; }
-        .btn-magic { background: #f39c12; color: white; margin-bottom: 5px; border: 2px solid #fff; }
-        .btn-clear { background: #c0392b; color: white; margin-bottom: 15px; }
-        .btn-copy { background: #8e44ad; color: white; }
-        
-        .no-export { visibility: hidden !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h3 style="margin:0">GUILIS v2.5</h3>
-    <input type="month" id="mes-selecionado" value="2026-02" style="width:100%; padding:8px; margin-top:5px; margin-bottom:10px;">
-    
-    <button class="btn-magic" onclick="sugerirEscala()">✨ SUGERIR ESCALA</button>
-    <button class="btn-clear" onclick="limparEscalaTotal()">🗑️ LIMPAR TELA</button>
-
-    <hr style="opacity:0.2; margin: 15px 0;">
-    <div id="lista-cadastro"></div>
-    <input type="text" id="novo-residente" placeholder="Novo residente..." style="width:100%; padding:8px; margin-top:5px;">
-    <button class="btn-add" onclick="addResidente()">ADICIONAR</button>
-
-    <hr style="opacity:0.2; margin: 15px 0;">
-    <div id="stats-sidebar"></div>
-
-    <button class="btn-copy" onclick="copiarComTitulo('lista-semanas')">📋 COPIAR ESCALA</button>
-    <button class="btn-copy" style="background:#2980b9" onclick="copiarComTitulo('stats-container')">📊 COPIAR STATUS</button>
+<!-- ══ BARRA DE AÇÕES SUPERIOR ══ -->
+<div id="action-bar">
+    <span>GUILIS v2.5</span>
 </div>
 
-<div id="main-content">
-    <div class="nav-header">
-        <a href="../index.html">🏠 Menu Principal</a>
-        <span id="status-msg" style="font-size: 0.85rem; color: #27ae60; font-weight: bold;"></span>
+<!-- ══ CORPO ══ -->
+<div id="body-row">
+
+    <div id="sidebar">
+        <input type="month" id="mes-selecionado" value="2026-02" style="width:100%; padding:8px; margin-bottom:10px; box-sizing:border-box;">
+        <hr style="opacity:0.2; margin: 10px 0;">
+        <div id="lista-cadastro"></div>
+        <input type="text" id="novo-residente" placeholder="Novo residente..." style="width:100%; padding:8px; margin-top:5px; box-sizing:border-box;">
+        <button class="btn-add" onclick="addResidente()">ADICIONAR</button>
+        <hr style="opacity:0.2; margin: 15px 0;">
+        <div id="stats-sidebar"></div>
     </div>
 
-    <div class="container" id="capture-area">
-        <div id="print-header" style="text-align: center; margin-bottom: 10px;">
-            <h2 style="margin: 0; font-size: 1.4rem; color: #000;">ESCALA DE RESIDENTES - HUOL</h2>
-            <span id="label-mes" style="font-weight: bold; text-transform: uppercase; font-size: 1.1rem; color: #444;"></span>
+    <div id="main-content">
+        <div class="nav-header">
+            <a href="../index.html">🏠 Menu Principal</a>
+            <div class="nav-actions" style="display:flex; gap:8px; align-items:center;">
+                <button id="btn-sombra" class="ab-btn" onclick="toggleSombraLine()">ADD/RETIRAR SOMBRA</button>
+                <button class="ab-btn ab-magic" onclick="sugerirEscala()">✨ GERAR ESCALA</button>
+                <button class="ab-btn ab-clear" onclick="limparEscalaTotal()">🗑️ LIMPAR TELA</button>
+                <button class="ab-btn ab-copy"   onclick="copiarComTitulo('lista-semanas')">📋 COPIAR ESCALA</button>
+                <button class="ab-btn ab-status" onclick="copiarComTitulo('stats-container')">📊 COPIAR BALANCEAMENTO</button>
+                <span id="status-msg" style="font-size: 0.85rem; color: #10b981; font-weight:700; margin-left: 6px;"></span>
+            </div>
         </div>
-        
-        <div id="lista-semanas"></div>
-        <div id="stats-container" style="display: none; padding: 15px; border-radius: 8px;"></div>
+
+        <div class="container" id="capture-area">
+            <div id="print-header" style="text-align: center; margin-bottom: 10px;">
+                <h2 style="margin: 0; font-size: 1.4rem; color: #000;">ESCALA DE RESIDENTES - HUOL</h2>
+                <span id="label-mes" style="font-weight: bold; text-transform: uppercase; font-size: 1.1rem; color: #444;"></span>
+            </div>
+            
+            <div id="lista-semanas"></div>
+            <div id="stats-container" style="display: none; padding: 15px; border-radius: 8px;"></div>
+
+            <!-- Crédito — sempre presente, visível só na imagem -->
+            <div id="credit-line">
+                Escala criada utilizando gerador de escala GUILIS &mdash; Guilherme Mota &mdash; Ex‑residente
+            </div>
+        </div>
     </div>
+
 </div>
 
 <div id="autocomplete-list"></div>
 
-<script>
+    <script>
     const residentesPadrao = ["Luana", "Liana", "Lucas", "Henrique", "Renato", "David", "Rafael"];
     let residentes = JSON.parse(localStorage.getItem('guilis_residentes')) || residentesPadrao;
     let escalaData = JSON.parse(localStorage.getItem('guilis_escala')) || {};
@@ -126,19 +202,41 @@
 
     function addResidente() {
         const input = document.getElementById('novo-residente');
-        if(input.value) { residentes.push(input.value); input.value = ''; renderResidentes(); atualizarStats(); save(); }
+        if(input.value.trim()) { residentes.push(input.value.trim()); input.value = ''; renderResidentes(); atualizarStats(); save(); }
     }
 
     function renderResidentes() {
         document.getElementById('lista-cadastro').innerHTML = residentes.map((r, i) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px; background:#34495e; padding:5px; border-radius:4px; font-size:0.8rem;">
-                <span>${r}</span><span onclick="removerResidente(${i})" style="cursor:pointer; color:#e74c3c;">×</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; background:#34495e; padding:6px; border-radius:6px; font-size:0.9rem;">
+                <span style="color:#fff;">${r}</span><span onclick="removerResidente(${i})" style="cursor:pointer; color:#e74c3c; font-weight:700;">×</span>
             </div>
         `).join('');
     }
 
     function removerResidente(i) {
         if(confirm('Remover?')) { residentes.splice(i,1); renderResidentes(); atualizarStats(); save(); }
+    }
+
+    // Gerenciamento da linha 'SOMBRA' por mês (toggle)
+    function getSombraMonths() {
+        return JSON.parse(localStorage.getItem('guilis_sombra_months') || '{}');
+    }
+    function isSombraEnabledForMonth(key) { return !!getSombraMonths()[key]; }
+    function setSombraForMonth(key, val) { const m = getSombraMonths(); if (val) m[key] = true; else delete m[key]; localStorage.setItem('guilis_sombra_months', JSON.stringify(m)); }
+    function toggleSombraLine() {
+        const key = document.getElementById('mes-selecionado').value;
+        const enabled = isSombraEnabledForMonth(key);
+        setSombraForMonth(key, !enabled);
+        renderSombraButton();
+        gerarEscala(); save();
+    }
+    function renderSombraButton() {
+        const btn = document.getElementById('btn-sombra'); if (!btn) return;
+        const key = document.getElementById('mes-selecionado').value;
+        const en = isSombraEnabledForMonth(key);
+        btn.innerText = en ? 'SOMBRA ✓' : 'SOMBRA';
+        btn.style.background = en ? '#fde68a' : '#1f2937';
+        btn.style.color = en ? '#92400e' : '#e6eef8';
     }
 
     function limparEscalaTotal() {
@@ -160,31 +258,22 @@
         for (let d = 1; d <= ultimoDia; d++) {
             const data = new Date(ano, mes-1, d);
             if (data.getDay() >= 1 && data.getDay() <= 5) {
-                // Congelação
                 let candsCong = [...residentes].sort((a, b) => counts[a].cong - counts[b].cong || Math.random() - 0.5);
                 let eleitoCong = candsCong[0];
                 escalaData[`cong-${d}`] = [eleitoCong];
                 counts[eleitoCong].cong++;
 
-                // Macro
                 let candsMacro = [...residentes].sort((a, b) => counts[a].macro - counts[b].macro || Math.random() - 0.5);
                 let selecionadosMacro = [];
                 for (let r of candsMacro) {
-                    if (selecionadosMacro.length < nMacro) {
-                        selecionadosMacro.push(r);
-                        counts[r].macro++;
-                    }
+                    if (selecionadosMacro.length < nMacro) { selecionadosMacro.push(r); counts[r].macro++; }
                 }
                 escalaData[`macro-${d}`] = selecionadosMacro;
 
-                // Micro (com exclusão de quem já está na Macro)
                 let candsMicro = [...residentes].sort((a, b) => counts[a].micro - counts[b].micro || Math.random() - 0.5);
                 let selecionadosMicro = [];
                 for (let r of candsMicro) {
-                    if (selecionadosMicro.length < nMicro && !selecionadosMacro.includes(r)) {
-                        selecionadosMicro.push(r);
-                        counts[r].micro++;
-                    }
+                    if (selecionadosMicro.length < nMicro && !selecionadosMacro.includes(r)) { selecionadosMicro.push(r); counts[r].micro++; }
                 }
                 escalaData[`micro-${d}`] = selecionadosMicro;
             }
@@ -202,15 +291,17 @@
         for (let d = 1; d <= ultimoDia; d++) {
             const data = new Date(ano, mes-1, d);
             if (data.getDay() >= 1 && data.getDay() <= 5) diasUteis.push({ dia: d, label: data.toLocaleDateString('pt-BR', {weekday:'long'}).toUpperCase() });
-            if (data.getDay() === 5 || d === ultimoDia) { if (diasUteis.length > 0) { container.appendChild(criarTabelaSemana(contadorSemana++, diasUteis, mes)); diasUteis = []; } }
+            if (data.getDay() === 5 || d === ultimoDia) { if (diasUteis.length > 0) { const monthKey = document.getElementById('mes-selecionado').value; const sombraMonths = JSON.parse(localStorage.getItem('guilis_sombra_months')||'{}'); const includeSombra = !!sombraMonths[monthKey]; container.appendChild(criarTabelaSemana(contadorSemana++, diasUteis, mes, includeSombra)); diasUteis = []; } }
         }
         renderizarBadges(); atualizarStats();
     }
 
-    function criarTabelaSemana(num, dias, mes) {
+    function criarTabelaSemana(num, dias, mes, includeSombra = false) {
         const div = document.createElement('div');
         div.className = 'semana-bloco';
-        const setores = [{id:'cong', label:'CONG'}, {id:'micro', label:'MICRO'}, {id:'macro', label:'MACRO'}];
+        const setores = [{id:'cong', label:'CONG'}];
+        if (includeSombra) setores.push({id:'sombra', label:'SOMBRA'});
+        setores.push({id:'micro', label:'MICRO'}, {id:'macro', label:'MACRO'});
         let html = `<table><thead><tr><th class="semana-col">SEM ${num}</th>`;
         for(let i=0; i<5; i++) {
             if(dias[i]) html += `<th>${dias[i].dia}/${mes < 10 ? '0'+mes : mes} ${dias[i].label}</th>`;
@@ -251,12 +342,15 @@
         document.getElementById('autocomplete-list').style.display = 'none';
     }
 
+    /* ── CORREÇÃO DO BUG DOS X ──
+       Os X ficam sempre visíveis no app.
+       Durante a exportação, adicionamos hide-for-export via JS. */
     function renderizarBadges() {
         Object.keys(escalaData).forEach(id => {
             const container = document.getElementById(`badges-${id}`);
             if (container) {
                 container.innerHTML = (escalaData[id] || []).map((n, i) => `
-                    <span class="badge-nome">${n}<span class="btn-rm-nome no-export" onclick="removeBadge('${id}', ${i})">×</span></span>
+                    <span class="badge-nome">${n}<span class="btn-rm-nome" onclick="removeBadge('${id}', ${i})">×</span></span>
                 `).join('');
             }
         });
@@ -275,7 +369,7 @@
             (escalaData[id] || []).forEach(n => { if(stats[n]) stats[n][tipo]++; });
         });
         const max = Math.max(...residentes.map(r => Math.max(stats[r].cong, stats[r].micro, stats[r].macro)), 1);
-        const render = (isS) => residentes.map(r => `
+        const render = () => residentes.map(r => `
             <div class="stat-card">
                 <strong>${r}</strong>
                 <div class="stat-row"><span class="stat-label">Cg:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-cong" style="width:${(stats[r].cong/max)*100}%"></div></div><span class="stat-count">${stats[r].cong}</span></div>
@@ -283,18 +377,20 @@
                 <div class="stat-row"><span class="stat-label">Ma:</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-macro" style="width:${(stats[r].macro/max)*100}%"></div></div><span class="stat-count">${stats[r].macro}</span></div>
             </div>
         `).join('');
-        document.getElementById('stats-sidebar').innerHTML = render(true);
-        document.getElementById('stats-container').innerHTML = render(false);
+        document.getElementById('stats-sidebar').innerHTML = render();
+        document.getElementById('stats-container').innerHTML = render();
     }
 
     async function copiarComTitulo(idMostra) {
-        const area = document.getElementById('capture-area');
-        const escala = document.getElementById('lista-semanas');
-        const status = document.getElementById('stats-container');
-        const rms = document.querySelectorAll('.btn-rm-nome');
-        const inputs = document.querySelectorAll('.input-cell');
-        
-        if(idMostra === 'stats-container') {
+        const area     = document.getElementById('capture-area');
+        const escala   = document.getElementById('lista-semanas');
+        const status   = document.getElementById('stats-container');
+        const rmBtns   = document.querySelectorAll('.btn-rm-nome');
+        const inputs   = document.querySelectorAll('.input-cell');
+        const credit   = document.getElementById('credit-line');
+
+        // Preparar área
+        if (idMostra === 'stats-container') {
             status.style.display = 'grid';
             status.style.backgroundColor = '#f1f1f1';
             area.classList.add('img-mode');
@@ -303,8 +399,12 @@
             escala.style.display = 'block';
             status.style.display = 'none';
         }
-        rms.forEach(b => b.classList.add('no-export'));
-        inputs.forEach(i => i.classList.add('no-export'));
+
+        // Ocultar elementos interativos
+        rmBtns.forEach(b => b.classList.add('hide-for-export'));
+        inputs.forEach(i => i.classList.add('hide-for-export'));
+        // Mostrar crédito
+        credit.style.color = '#888';
 
         const msg = document.getElementById('status-msg');
         msg.innerText = "Gerando imagem...";
@@ -315,18 +415,28 @@
                 await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
                 msg.innerText = "✅ Copiado!"; setTimeout(() => msg.innerText = "", 3000);
             });
-        } catch (err) { msg.innerText = "❌ Erro."; }
+        } catch (err) { msg.innerText = "❌ Erro: " + err.message; }
 
+        // Restaurar
         escala.style.display = 'block';
         status.style.display = 'none';
         area.classList.remove('img-mode');
-        rms.forEach(b => b.classList.remove('no-export'));
-        inputs.forEach(i => i.classList.remove('no-export'));
+        rmBtns.forEach(b => b.classList.remove('hide-for-export'));
+        inputs.forEach(i => i.classList.remove('hide-for-export'));
     }
 
-    document.getElementById('mes-selecionado').onchange = () => { if(confirm('Mudar mês limpa a escala?')) { escalaData={}; gerarEscala(); save(); } };
-    window.onclick = () => document.getElementById('autocomplete-list').style.display = 'none';
-    renderResidentes(); gerarEscala();
+    document.getElementById('mes-selecionado').onchange = () => {
+        if(confirm('Mudar mês limpa a escala atual. Continuar?')) { escalaData = {}; gerarEscala(); save(); renderSombraButton(); }
+        else { /* reverte visualmente — recarrega mês salvo */ renderSombraButton(); }
+    };
+    window.onclick = (e) => {
+        if (!e.target.closest('#autocomplete-list') && !e.target.classList.contains('input-cell'))
+            document.getElementById('autocomplete-list').style.display = 'none';
+    };
+
+    renderResidentes();
+    renderSombraButton();
+    gerarEscala();
 </script>
 
 </body>
