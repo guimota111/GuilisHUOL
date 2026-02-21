@@ -86,14 +86,10 @@
     <div id="btn-grid-residentes">
         </div>
 
-    <button class="btn-clear" onclick="limparEscala()">🗑️ LIMPAR ESCALA</button>
-
     <hr>
 
     <label>LISTA ATIVA (ORDEM DE CORTE):</label>
     <div id="lista-ativa"></div>
-
-    <button class="btn-copy" onclick="copiarImagem()">📋 COPIAR IMAGEM</button>
 
     <hr>
 
@@ -108,7 +104,11 @@
 <div id="main-content">
     <div class="nav-header">
         <a href="../index.html">🏠 Menu Principal</a>
-        <span id="status-msg"></span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-clear" onclick="limparEscala()" style="margin-top: 0; width: auto; padding: 8px 12px;">🗑️ LIMPAR ESCALA</button>
+            <button class="btn-copy" onclick="copiarImagem()" style="margin-top: 0; width: auto; padding: 8px 12px;">📋 COPIAR IMAGEM</button>
+            <span id="status-msg"></span>
+        </div>
     </div>
 
     <div class="container" id="capture-area">
@@ -128,9 +128,9 @@
             <tbody id="corpo-tabela"></tbody>
         </table>
         
-        <p style="margin-top: 25px; font-style: italic; color: #999; font-size: 0.8rem; text-align: center;">
-            Responsável: _________________________________
-        </p>
+        <div style="text-align: center; font-size: 0.65rem; color: #000; margin-top: 12px; font-weight: 700;">
+            Controle de distribuição criado utilizando gerador GUILIS &mdash; Guilherme Mota &mdash; Ex‑residente
+        </div>
     </div>
 </div>
 
