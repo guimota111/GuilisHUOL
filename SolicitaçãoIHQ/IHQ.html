@@ -1,1 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUILIS - Solicitação IHQ HUOL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .laudo-preview { font-family: 'Times New Roman', serif; color: black; }
+        
+        .custom-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; background: white;
+            border: 2px solid #3b82f6; border-top: none; border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1000; display: none;
+        }
+        .dropdown-item { padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+        .dropdown-item.selected { background: #eff6ff; font-weight: bold; }
+        .input-with-dropdown-active { border-color: #3b82f6 !important; border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; z-index: 1001; }
+        
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none; }
+            .print-area { border: none !important; shadow: none !important; padding: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
 
+    <div class="max-w-full mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8">
+        
+        <div class="no-print bg-white p-6 rounded shadow-md border-t-4 border-blue-600 h-fit w-full">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-800 italic uppercase">GUILIS</h2>
+                    <p class="text-gray-500 text-sm font-medium">HUOL • Solicitação de IHQ</p>
+                </div>
+                <button onclick="abrirModal()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded text-xs font-bold hover:bg-gray-200 border">⚙️ PAINÉIS</button>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Número do Exame (ex: 1234/26):</label>
+                <input type="text" id="input-numero-caso" oninput="atualizarPreview()" placeholder="0000/00" class="w-full border-2 border-gray-200 p-3 rounded-lg text-lg font-bold text-blue-900 outline-none focus:border-blue-500">
+            </div>
+
+            <div class="mb-6 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1">Protocolo Rápido:</label>
+                <select id="select-paineis-ui" onchange="aplicarPainel(this.value); this.value='';" class="w-full border-2 border-blue-200 p-2 rounded text-sm bg-white font-bold text-blue-800 outline-none focus:border-blue-500"></select>
+            </div>
+            
+            <div id="container-inputs" class="space-y-2"></div>
+            
+            <div class="mt-4 flex gap-2">
+                <button onclick="adicionarLinha()" class="bg-gray-200 text-gray-700 py-2 px-4 rounded font-bold hover:bg-gray-300 transition-all flex-1 text-xs">+ ANTICORPO</button>
+                <button onclick="limparTabela()" class="bg-red-50 text-red-600 py-2 px-4 rounded font-bold hover:bg-red-100 transition-all flex-1 text-xs border border-red-100">LIMPAR TUDO</button>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="window.print()" class="w-full bg-blue-700 text-white font-black py-4 rounded-lg shadow-xl text-sm uppercase tracking-widest hover:bg-blue-800">GERAR IMPRESSÃO / PDF</button>
+            </div>
+        </div>
+
+        <div class="print-area bg-white p-12 rounded shadow-md w-full min-h-[800px] border border-gray-200">
+            <div id="documento-final" class="laudo-preview w-full">
+                <div class="w-full mb-8 border-b pb-4">
+                    <img src="cabeçalho.png" alt="Logos Institucionais" class="w-full h-auto object-contain">
+                </div>
+
+                <div class="text-center mb-8">
+                    <h1 class="text-xl font-bold uppercase underline">Solicitação de Exame Imuno-histoquímico</h1>
+                </div>
+
+                <div class="mb-10 text-xl">
+                    <strong>Nº DO EXAME:</strong> <span id="display-numero-caso" class="border-b-2 border-dotted border-black px-4 min-w-[150px] inline-block"></span>
+                </div>
+
+                <div id="area-lista" class="min-h-[350px] py-4"></div>
+
+                <div class="mt-24 flex flex-col items-center">
+                    <div class="w-72 border-t border-black"></div>
+                    <p class="text-sm font-bold mt-2 uppercase">Patologista Solicitante</p>
+                    <p class="text-[10px] text-gray-500 italic">Hospital Universitário Onofre Lopes - HUOL/EBSERH</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalPaineis" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center p-4 z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold uppercase tracking-tight">Meus Protocolos</h3>
+                <button onclick="fecharModal()" class="text-gray-400 hover:text-red-500 text-3xl">&times;</button>
+            </div>
+            <div class="p-0 overflow-y-auto flex-1 bg-gray-50" id="listaPaineisVisual"></div>
+            <div class="p-5 border-t bg-white">
+                <input type="text" id="novo-painel-nome" placeholder="Ex: ADENO PULMÃO" class="w-full border p-2 rounded text-sm mb-2 outline-none focus:border-blue-500">
+                <button onclick="salvarNovoPainel()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">SALVAR LISTA ATUAL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const estoqueIHQ = ["AML (actina músculo liso)", "Alfafetoproteína", "Anidrase carbônica IX (CA IX)", "ALK1", "ALK (D5F3)", "BCOR", "BCL-2", "BCL-6", "BER-EP4", "Beta-Catenina", "Beta-HCG", "c-KIT (CD117)", "c-MYC", "CA125", "CA19.9", "Calcitonina", "Caldesmon", "Calponina", "Calretinina", "Carcinoembrionário (CEA)", "CD1a", "CD2", "CD3", "CD4", "CD5", "CD7", "CD8", "CD10", "CD15", "CD20", "CD21", "CD23", "CD30", "CD31", "CD34", "CD43", "CD45", "CD56", "CD57", "CD61", "CD68", "CD79a", "CD99", "CD138", "CDK4", "CDX2", "CEA monoclonal", "Ciclina D1", "AE1/AE3 (CK pan)", "CAM5.2", "CK5/6", "CK7", "CK8/18", "CK19", "CK20", "34βE12", "Cromogranina A", "DBA44", "Desmina", "DOG1", "E-Caderina", "EMA", "ERG", "Fator von Willebrand", "Fator VIII", "Fator XIIIa", "FLI-1", "GATA-3", "GFAP", "Glutamina Sintetase", "Glypican-3", "H3.3G34W", "H3K27me3", "H3K36M", "Hepatocyte", "HER2", "HHV8", "INI-1", "Inibina", "Kappa", "Ki-67", "Lambda", "LEF1", "Melan-A", "Melanossomo (HMB45)", "MDM2", "Mesothelial Cells (HBME-1)", "MLH1", "MSH2", "MSH6", "PMS2", "MUM1", "Mieloperoxidase", "Miogenina", "MyoD1", "Napsina A", "NKX2.2", "NKX3.1", "Oct-2", "OCT3/4", "p16", "p40", "p53", "p63", "PAX-5", "PAX-8", "PD-L1", "PLAP", "Podoplanina (D2-40)", "PSA", "PSAP", "Racemase", "RA", "RE", "RP", "ROS1", "S100", "SALL-4", "SATB2", "SF-1", "Sinaptofisina", "SOX-10", "SOX-11", "STAT6", "TBX21", "TDT", "TFE3", "Tireoglobulina", "TLE-1", "TTF-1", "Uroplaquina", "Vimentina", "WT-1"];
+
+        let paineisUsuario = JSON.parse(localStorage.getItem('guilis_paineis_solicitacao')) || {
+            "MAMA": ["RE", "RP", "Ki-67", "HER2"],
+            "MMR": ["MLH1", "MSH2", "MSH6", "PMS2"]
+        };
+
+        function adicionarLinha(valor = "", focar = false) {
+            const container = document.getElementById('container-inputs');
+            const div = document.createElement('div');
+            div.className = 'relative flex gap-2 items-center linha-input';
+            div.innerHTML = `
+                <input type="text" value="${valor}" placeholder="Pesquisar..." 
+                    oninput="buscar(this)" 
+                    onfocus="buscar(this)"
+                    onkeydown="navegar(event, this)"
+                    class="ant border-2 border-gray-100 p-2 rounded-lg w-full text-sm outline-none focus:border-blue-500">
+                <div class="custom-dropdown"></div>
+                <button onclick="this.parentElement.remove(); atualizarPreview();" class="text-red-300 hover:text-red-500 px-1">✕</button>
+            `;
+            container.appendChild(div);
+            if(focar) div.querySelector('input').focus();
+            if(valor) atualizarPreview();
+        }
+
+        function buscar(input) {
+            const dropdown = input.nextElementSibling;
+            const termo = input.value.toLowerCase();
+            const filtrados = estoqueIHQ.filter(a => a.toLowerCase().includes(termo)).sort();
+            
+            if(filtrados.length > 0) {
+                dropdown.innerHTML = filtrados.map((a, i) => 
+                    `<div class="dropdown-item ${i === 0 ? 'selected' : ''}" onclick="selecionar(this, '${a}')">${a}</div>`
+                ).join('');
+                dropdown.style.display = 'block';
+                input.classList.add('input-with-dropdown-active');
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function navegar(e, input) {
+            const dropdown = input.nextElementSibling;
+            const itens = dropdown.querySelectorAll('.dropdown-item');
+            let index = Array.from(itens).findIndex(i => i.classList.contains('selected'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (index < itens.length - 1) {
+                    itens[index].classList.remove('selected');
+                    itens[index + 1].classList.add('selected');
+                    itens[index + 1].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (index > 0) {
+                    itens[index].classList.remove('selected');
+                    itens[index - 1].classList.add('selected');
+                    itens[index - 1].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const selecionado = dropdown.querySelector('.dropdown-item.selected');
+                if (selecionado) {
+                    selecionar(selecionado, selecionado.innerText);
+                } else {
+                    pularParaProximo(input);
+                }
+            }
+        }
+
+        function selecionar(elemento, valor) {
+            const linha = elemento.closest('.linha-input');
+            const input = linha.querySelector('input');
+            input.value = valor;
+            fecharTodosDropdowns();
+            atualizarPreview();
+            pularParaProximo(input);
+        }
+
+        function pularParaProximo(inputAtual) {
+            const linhas = Array.from(document.querySelectorAll('.ant'));
+            const index = linhas.indexOf(inputAtual);
+            if (index < linhas.length - 1) {
+                linhas[index + 1].focus();
+            } else {
+                adicionarLinha("", true);
+            }
+        }
+
+        function fecharTodosDropdowns() {
+            document.querySelectorAll('.custom-dropdown').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('.ant').forEach(i => i.classList.remove('input-with-dropdown-active'));
+        }
+
+        function atualizarPreview() {
+            // Número do Caso
+            document.getElementById('display-numero-caso').innerText = document.getElementById('input-numero-caso').value;
+            
+            // Lista
+            const listaArea = document.getElementById('area-lista');
+            const anticorpos = Array.from(document.querySelectorAll('.ant'))
+                                    .map(i => i.value.trim())
+                                    .filter(v => v !== "");
+            
+            if(anticorpos.length === 0) {
+                listaArea.innerHTML = "<p class='text-gray-300 italic'>Nenhum anticorpo selecionado...</p>";
+                return;
+            }
+
+            let html = "<ul class='list-none space-y-3'>";
+            anticorpos.forEach(ant => {
+                html += `<li class="text-lg flex items-center gap-4">
+                            <span class="w-5 h-5 border-[1.5pt] border-black rounded-sm"></span> 
+                            <span class="uppercase">${ant}</span>
+                         </li>`;
+            });
+            html += "</ul>";
+            listaArea.innerHTML = html;
+        }
+
+        function limparTabela() {
+            if(!confirm("Limpar dados?")) return;
+            document.getElementById('input-numero-caso').value = '';
+            document.getElementById('container-inputs').innerHTML = '';
+            adicionarLinha("", true);
+            atualizarPreview();
+        }
+
+        function aplicarPainel(nome) {
+            document.getElementById('container-inputs').innerHTML = '';
+            paineisUsuario[nome].forEach(a => adicionarLinha(a));
+            atualizarPreview();
+        }
+
+        function renderizarSelect() {
+            const select = document.getElementById('select-paineis-ui');
+            select.innerHTML = '<option value="">Selecione...</option>' + 
+                Object.keys(paineisUsuario).map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
+        function salvarNovoPainel() {
+            const nome = document.getElementById('novo-painel-nome').value.trim().toUpperCase();
+            if(!nome) return alert("Dê um nome");
+            const lista = Array.from(document.querySelectorAll('.ant')).map(i => i.value).filter(v => v !== "");
+            paineisUsuario[nome] = lista;
+            localStorage.setItem('guilis_paineis_solicitacao', JSON.stringify(paineisUsuario));
+            renderizarSelect();
+            fecharModal();
+        }
+
+        function abrirModal() { document.getElementById('modalPaineis').style.display = 'flex'; renderizarListaModal(); }
+        function fecharModal() { document.getElementById('modalPaineis').style.display = 'none'; }
+
+        function renderizarListaModal() {
+            const cont = document.getElementById('listaPaineisVisual');
+            cont.innerHTML = Object.keys(paineisUsuario).map(k => `
+                <div class="p-3 border-b flex justify-between bg-white items-center">
+                    <span class="text-sm font-bold">${k}</span>
+                    <button onclick="delete paineisUsuario['${k}']; renderizarSelect(); renderizarListaModal();" class="text-red-500">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        document.addEventListener('click', (e) => {
+            if(!e.target.classList.contains('ant')) fecharTodosDropdowns();
+        });
+
+        // Inicializar
+        adicionarLinha();
+        renderizarSelect();
+    </script>
+</body>
+</html>
