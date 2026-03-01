@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUILIS — Citologia Cérvico-Vaginal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4 font-sans text-sm">
+<div class="max-w-5xl mx-auto">
+
+    <header class="mb-4 flex items-baseline gap-3">
+        <h1 class="text-xl font-bold text-gray-800">Citologia Cérvico-Vaginal (Papanicolau)</h1>
+        <span class="text-xs text-gray-400">Máscara de Laudo</span>
+    </header>
+
+    <div class="flex gap-4 items-start">
+
+        <!-- ====== COLUNA ESQUERDA — FORMULÁRIO ====== -->
+        <div class="flex-1 space-y-3">
+
+            <!-- 1. ADEQUABILIDADE -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h2 class="font-bold text-gray-700 text-xs uppercase border-b pb-2 mb-3 tracking-wide">
+                    1. Adequabilidade do Material
+                </h2>
+                <select id="selAdeq" onchange="onAdeqChange()" class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+                    <option value="1">Satisfatória</option>
+                    <option value="2">Insatisfatória: material acelular ou hipocelular (menos de 10% do esfregaço)</option>
+                    <option value="3">Insatisfatória: sangue em mais de 75% do esfregaço</option>
+                    <option value="4">Insatisfatória: piócitos em mais de 75% do esfregaço</option>
+                    <option value="5">Insatisfatória: artefatos de dessecamento em mais de 75% do esfregaço</option>
+                    <option value="6">Insatisfatória: contaminantes externos em mais de 75% do esfregaço</option>
+                    <option value="7">Insatisfatória: intensa superposição celular em mais de 75% do esfregaço</option>
+                    <option value="8">Insatisfatória: outros</option>
+                </select>
+                <div id="adeqOutrosDiv" class="mt-2 hidden">
+                    <input type="text" id="txtAdeqOutros" placeholder="Especificar..."
+                        oninput="updatePreview()"
+                        class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+                </div>
+            </div>
+
+            <!-- 2. EPITÉLIOS -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h2 class="font-bold text-gray-700 text-xs uppercase border-b pb-2 mb-3 tracking-wide">
+                    2. Epitélios Representados na Amostra
+                </h2>
+                <div class="flex flex-wrap gap-6">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="cbEscam" checked onchange="updatePreview()" class="accent-pink-500"> Escamoso
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="cbGland" checked onchange="updatePreview()" class="accent-pink-500"> Glandular
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="cbMeta" checked onchange="updatePreview()" class="accent-pink-500"> Metaplásico
+                    </label>
+                </div>
+            </div>
+
+            <!-- 3. DIAGNÓSTICO DESCRITIVO -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h2 class="font-bold text-gray-700 text-xs uppercase border-b pb-2 mb-3 tracking-wide">
+                    3. Diagnóstico Descritivo
+                </h2>
+
+                <!-- Alterações Benignas -->
+                <div class="mb-4">
+                    <p class="text-xs font-semibold text-pink-700 uppercase tracking-wide mb-2">
+                        Alterações Celulares Benignas Reativas ou Reparativas
+                    </p>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbInflam" onchange="updatePreview()" class="accent-pink-500"> Inflamação
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbMetaEsc" onchange="updatePreview()" class="accent-pink-500"> Metaplasia escamosa imatura
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbRep" onchange="updatePreview()" class="accent-pink-500"> Reparação
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbAtrofia" onchange="updatePreview()" class="accent-pink-500"> Atrofia com inflamação
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbRad" onchange="updatePreview()" class="accent-pink-500"> Radiação
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <label class="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                                <input type="checkbox" id="cbOutroBen" onchange="updatePreview()" class="accent-pink-500"> Outro:
+                            </label>
+                            <input type="text" id="txtOutroBen" placeholder="Especificar..."
+                                oninput="updatePreview()"
+                                class="flex-1 border rounded p-1 text-sm focus:outline-none focus:ring-1 focus:ring-pink-400">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Microbiologia -->
+                <div>
+                    <p class="text-xs font-semibold text-pink-700 uppercase tracking-wide mb-2">Microbiologia</p>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbLacto" onchange="updatePreview()" class="accent-pink-500"> Lactobacillus sp.
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbVagBact" onchange="updatePreview()" class="accent-pink-500"> Vaginose bacteriana
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbCocos" onchange="updatePreview()" class="accent-pink-500"> Cocos
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbActino" onchange="updatePreview()" class="accent-pink-500"> Actinomyces sp.
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbTricho" onchange="updatePreview()" class="accent-pink-500"> Trichomonas vaginalis
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbHerpes" onchange="updatePreview()" class="accent-pink-500"> Efeito citopático compatível com vírus do grupo herpes
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="cbChlam" onchange="updatePreview()" class="accent-pink-500"> Sugestivo de Chlamydia sp.
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. CONCLUSÃO -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h2 class="font-bold text-gray-700 text-xs uppercase border-b pb-2 mb-3 tracking-wide">
+                    4. Conclusão
+                </h2>
+                <select id="selConc" onchange="updatePreview()" class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+                    <option>Negativo para lesão intraepitelial ou malignidade</option>
+                    <option>ASCUS (Atipias de significado indeterminado em células escamosas - possivelmente não neoplásicas)</option>
+                    <option>Atipias de significado indeterminado em células escamosas, não se pode afastar lesão de alto grau (ASC-H)</option>
+                    <option>Lesão intra-epitelial de baixo grau (LSIL - compreendendo: efeito citopático pelo HPV e NIC I)</option>
+                    <option>Lesão intra-epitelial de alto grau (HSIL - compreendendo: NIC II e NIC III)</option>
+                    <option>Carcinoma de células escamosas</option>
+                    <option>Atipias de significado indeterminado em células glandulares (AGC - SOE)</option>
+                    <option>Atipias de significado indeterminado em células glandulares, não se pode afastar lesão de alto grau (AGC-H)</option>
+                    <option>Adenocarcinoma 'in situ'</option>
+                    <option>Adenocarcinoma invasivo</option>
+                </select>
+            </div>
+
+        </div><!-- fim coluna esquerda -->
+
+        <!-- ====== COLUNA DIREITA — PRÉVIA ====== -->
+        <div class="w-72 shrink-0 space-y-3 sticky top-4">
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h2 class="font-bold text-gray-700 text-xs uppercase mb-3 tracking-wide">Prévia do Laudo</h2>
+                <textarea id="txtPrevia" readonly rows="20"
+                    class="w-full bg-gray-900 text-green-400 font-mono text-xs p-3 rounded leading-relaxed resize-none"></textarea>
+
+                <button id="btnCopiar" onclick="copiarParaWord()"
+                    class="mt-3 w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 rounded transition text-sm">
+                    Copiar para o Word
+                </button>
+                <button onclick="limpar()"
+                    class="mt-2 w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded transition text-sm">
+                    Limpar
+                </button>
+            </div>
+
+        </div><!-- fim coluna direita -->
+
+    </div>
+</div>
+
+<!-- Div oculta usada como fallback para copiar HTML formatado -->
+<div id="clipSource" contenteditable="true"
+    style="position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;white-space:pre-wrap;
+           font-family:'Segoe UI',sans-serif;font-size:11pt;"></div>
+
+<script>
+// =====================================================================
+// AUXILIARES
+// =====================================================================
+const $ = id => document.getElementById(id);
+const chk = id => $(id).checked;
+const txt = id => $(id).value.trim();
+
+function onAdeqChange() {
+    $('adeqOutrosDiv').classList.toggle('hidden', $('selAdeq').value !== '8');
+    updatePreview();
+}
+
+// =====================================================================
+// CONSTRUÇÃO DO CONTEÚDO
+// =====================================================================
+function getData() {
+    const selAdeq = $('selAdeq');
+    let adeqText = selAdeq.options[selAdeq.selectedIndex].text;
+    if (selAdeq.value === '8' && txt('txtAdeqOutros'))
+        adeqText = 'Insatisfatória: ' + txt('txtAdeqOutros');
+
+    const epitList = [];
+    if (chk('cbEscam'))  epitList.push('Escamoso');
+    if (chk('cbGland'))  epitList.push('Glandular');
+    if (chk('cbMeta'))   epitList.push('Metaplásico');
+
+    const benList = [];
+    if (chk('cbInflam'))  benList.push('Inflamação');
+    if (chk('cbMetaEsc')) benList.push('Metaplasia escamosa imatura');
+    if (chk('cbRep'))     benList.push('Reparação');
+    if (chk('cbAtrofia')) benList.push('Atrofia com inflamação');
+    if (chk('cbRad'))     benList.push('Radiação');
+    if (chk('cbOutroBen') && txt('txtOutroBen')) benList.push(txt('txtOutroBen'));
+
+    const microList = [];
+    if (chk('cbLacto'))   microList.push('Lactobacillus sp.');
+    if (chk('cbVagBact')) microList.push('Vaginose bacteriana');
+    if (chk('cbCocos'))   microList.push('Cocos');
+    if (chk('cbActino'))  microList.push('Actinomyces sp.');
+    if (chk('cbTricho'))  microList.push('Trichomonas vaginalis');
+    if (chk('cbHerpes'))  microList.push('Efeito citopático compatível com vírus do grupo herpes');
+    if (chk('cbChlam'))   microList.push('Sugestivo de Chlamydia sp.');
+
+    const selConc = $('selConc');
+    const concText = selConc.options[selConc.selectedIndex].text;
+
+    const epitStr = epitList.length === 0 ? ''
+        : epitList.length === 1 ? epitList[0]
+        : epitList.length === 2 ? epitList[0] + ' e ' + epitList[1]
+        : epitList[0] + ', ' + epitList[1] + ' e ' + epitList[2];
+
+    return { adeqText, epitStr, benList, microList, concText };
+}
+
+function buildPlainText({ adeqText, epitStr, benList, microList, concText }) {
+    let r = 'ADEQUABILIDADE DO MATERIAL\n' + adeqText + '\n';
+    if (epitStr) r += '\nEpitélios representados na amostra:\n ' + epitStr + '.\n';
+    r += '\nDIAGNÓSTICO DESCRITIVO\n';
+    if (benList.length) {
+        r += 'Alterações Celulares Benignas Reativas ou Reparativas:\n';
+        benList.forEach(i => r += '- ' + i + '\n');
+        r += '\n';
+    }
+    if (microList.length) {
+        r += 'Microbiologia:\n';
+        microList.forEach(i => r += '- ' + i + '\n');
+        r += '\n';
+    }
+    r += 'Conclusão\n' + concText + '.';
+    return r;
+}
+
+function buildHTML({ adeqText, epitStr, benList, microList, concText }) {
+    let h = '<b>ADEQUABILIDADE DO MATERIAL</b><br>' + adeqText + '<br><br>';
+    if (epitStr)
+        h += '<b>Epitélios representados na amostra:</b><br>' + epitStr + '.<br><br>';
+    h += '<b>DIAGNÓSTICO DESCRITIVO</b><br>';
+    if (benList.length) {
+        h += '<b>Alterações Celulares Benignas Reativas ou Reparativas:</b><br>';
+        benList.forEach(i => h += '- ' + i + '<br>');
+        h += '<br>';
+    }
+    if (microList.length) {
+        h += '<b>Microbiologia:</b><br>';
+        microList.forEach(i => h += '- ' + i + '<br>');
+        h += '<br>';
+    }
+    h += '<b>Conclusão</b><br>' + concText + '.';
+    return h;
+}
+
+// =====================================================================
+// PREVIEW
+// =====================================================================
+function updatePreview() {
+    $('txtPrevia').value = buildPlainText(getData());
+}
+
+// =====================================================================
+// COPIAR PARA O WORD (com formatação HTML via Clipboard API)
+// =====================================================================
+async function copiarParaWord() {
+    const data = getData();
+    const htmlContent = buildHTML(data);
+    const btn = $('btnCopiar');
+
+    const setBtn = (label, colorFrom, colorTo, hoverFrom, hoverTo) => {
+        btn.textContent = label;
+        btn.classList.replace(colorFrom, colorTo);
+        btn.classList.replace(hoverFrom, hoverTo);
+    };
+
+    try {
+        // Tenta Clipboard API moderna (suporta text/html)
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': blob })]);
+        setBtn('✓ Copiado! Cole com Ctrl+V no Word', 'bg-pink-600', 'bg-green-600', 'hover:bg-pink-700', 'hover:bg-green-700');
+    } catch (_) {
+        // Fallback: seleciona div contenteditable com HTML e usa execCommand
+        const clip = $('clipSource');
+        clip.innerHTML = htmlContent;
+        const range = document.createRange();
+        range.selectNodeContents(clip);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        try {
+            document.execCommand('copy');
+            setBtn('✓ Copiado! Cole com Ctrl+V no Word', 'bg-pink-600', 'bg-green-600', 'hover:bg-pink-700', 'hover:bg-green-700');
+        } catch (_2) {
+            setBtn('✗ Falha — use Ctrl+C na prévia', 'bg-pink-600', 'bg-red-600', 'hover:bg-pink-700', 'hover:bg-red-700');
+        }
+        sel.removeAllRanges();
+    }
+
+    setTimeout(() => {
+        setBtn('Copiar para o Word', 'bg-green-600', 'bg-pink-600', 'hover:bg-green-700', 'hover:bg-pink-700');
+        setBtn('Copiar para o Word', 'bg-red-600', 'bg-pink-600', 'hover:bg-red-700', 'hover:bg-pink-700');
+    }, 3000);
+}
+
+// =====================================================================
+// LIMPAR
+// =====================================================================
+function limpar() {
+    $('selAdeq').selectedIndex = 0;
+    $('adeqOutrosDiv').classList.add('hidden');
+    $('txtAdeqOutros').value = '';
+    ['cbEscam','cbGland','cbMeta'].forEach(id => $(id).checked = true);
+    ['cbInflam','cbMetaEsc','cbRep','cbAtrofia','cbRad','cbOutroBen'].forEach(id => $(id).checked = false);
+    $('txtOutroBen').value = '';
+    ['cbLacto','cbVagBact','cbCocos','cbActino','cbTricho','cbHerpes','cbChlam'].forEach(id => $(id).checked = false);
+    $('selConc').selectedIndex = 0;
+    updatePreview();
+}
+
+// Inicializa
+updatePreview();
+</script>
+</body>
+</html>
