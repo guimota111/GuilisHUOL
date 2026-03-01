@@ -42,6 +42,11 @@
                 <input type="text" id="input-numero-caso" oninput="atualizarPreview()" placeholder="0000/00" class="w-full border-2 border-gray-200 p-3 rounded-lg text-lg font-bold text-blue-900 outline-none focus:border-blue-500">
             </div>
 
+            <div class="mb-4">
+                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Número do Bloco:</label>
+                <input type="text" id="input-numero-bloco" oninput="atualizarPreview()" placeholder="Ex: A1" class="w-full border-2 border-gray-200 p-3 rounded-lg text-lg font-bold text-blue-900 outline-none focus:border-blue-500">
+            </div>
+
             <div class="mb-6 p-3 bg-blue-50 border border-blue-100 rounded-lg">
                 <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1">Protocolo Rápido:</label>
                 <select id="select-paineis-ui" onchange="aplicarPainel(this.value); this.value='';" class="w-full border-2 border-blue-200 p-2 rounded text-sm bg-white font-bold text-blue-800 outline-none focus:border-blue-500"></select>
@@ -61,6 +66,12 @@
 
         <div class="print-area bg-white p-12 rounded shadow-md w-full min-h-[800px] border border-gray-200">
             <div id="documento-final" class="laudo-preview w-full">
+                <div class="flex justify-end mb-2">
+                    <div class="border border-black px-3 py-1 text-sm">
+                        <span class="font-bold uppercase">ID da IHQ: </span>
+                        <span class="inline-block w-28 border-b border-black">&nbsp;</span>
+                    </div>
+                </div>
                 <div class="w-full mb-8 border-b pb-4">
                     <img src="cabeçalho.png" alt="Logos Institucionais" class="w-full h-auto object-contain">
                 </div>
@@ -69,8 +80,12 @@
                     <h1 class="text-xl font-bold uppercase underline">Solicitação de Exame Imuno-histoquímico</h1>
                 </div>
 
-                <div class="mb-10 text-xl">
+                <div class="mb-4 text-xl">
                     <strong>Nº DO EXAME:</strong> <span id="display-numero-caso" class="border-b-2 border-dotted border-black px-4 min-w-[150px] inline-block"></span>
+                </div>
+
+                <div class="mb-10 text-xl">
+                    <strong>Nº DO BLOCO:</strong> <span id="display-numero-bloco" class="border-b-2 border-dotted border-black px-4 min-w-[150px] inline-block"></span>
                 </div>
 
                 <div id="area-lista" class="min-h-[350px] py-4"></div>
@@ -197,6 +212,8 @@
         function atualizarPreview() {
             // Número do Caso
             document.getElementById('display-numero-caso').innerText = document.getElementById('input-numero-caso').value;
+            // Número do Bloco
+            document.getElementById('display-numero-bloco').innerText = document.getElementById('input-numero-bloco').value;
             
             // Lista
             const listaArea = document.getElementById('area-lista');
@@ -223,6 +240,7 @@
         function limparTabela() {
             if(!confirm("Limpar dados?")) return;
             document.getElementById('input-numero-caso').value = '';
+            document.getElementById('input-numero-bloco').value = '';
             document.getElementById('container-inputs').innerHTML = '';
             adicionarLinha("", true);
             atualizarPreview();
