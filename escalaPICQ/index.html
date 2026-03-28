@@ -83,8 +83,16 @@
 <body>
 
 <div id="sidebar">
-    <h3 style="margin-top:0">GUILIS - PICQ v4.4</h3>
-    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <a href="../index.html" style="color:#aaa; font-size:0.8rem; text-decoration:none; font-weight:bold;">← Menu</a>
+        <h3 style="margin:0">GUILIS - PICQ v4.4</h3>
+    </div>
+
+    <div class="setup-section" style="padding:10px; margin-bottom:12px;">
+        <h4>EDIÇÃO DO PICQ</h4>
+        <input type="text" id="edicao-picq" placeholder="Ex: 5, 2024-2025..." class="mini-input" style="width:100%; box-sizing:border-box;" oninput="atualizarTituloEscala()">
+    </div>
+
     <div class="setup-section">
         <h4>1. BALANCEAMENTO</h4>
         <div id="balanceamento-sidebar"></div>
@@ -131,11 +139,15 @@
     <div id="capture-balanceamento" style="display: none; width: 800px; background: white; padding: 20px;">
         <h2 style="margin-top:0; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 10px; text-align: center;">📊 BALANCEAMENTO DE CARGA</h2>
         <div id="balanceamento-export"></div>
+        <div style="margin-top: 15px; padding: 7px 14px; border-top: 3px solid #2c3e50; background: #f0f4f8; display: flex; justify-content: space-between; align-items: center;">
+            <strong style="font-size: 0.85rem; color: #2c3e50; letter-spacing: 1.5px; text-transform: uppercase;">GUILIS</strong>
+            <span style="font-size: 0.75rem; color: #555;">por Guilherme Mota &middot; Patologia HUOL</span>
+        </div>
     </div>
 
     <div class="container" id="tela-escala-interativa">
         <div style="text-align: center; border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px;">
-            <h1 style="margin:0; font-size: 2rem;">CRONOGRAMA PICQ</h1>
+            <h1 id="titulo-escala-interativa" style="margin:0; font-size: 2rem;">CRONOGRAMA PICQ</h1>
             <p style="margin:5px 0; color: #666; font-weight: bold;">Arraste para mudar o dia | Selecione para trocar</p>
         </div>
         <div id="escala-result"><p style="text-align:center; color:#999;">Marque as repetidas e clique em Gerar.</p></div>
@@ -143,10 +155,14 @@
 
     <div id="capture-escala-export" style="display: none; width: 1000px; background: white; padding: 30px;">
         <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="margin:0; font-size: 2.5rem; color: #2c3e50;">CRONOGRAMA DE APRESENTAÇÃO - PICQ</h1>
+            <h1 id="titulo-escala-export" style="margin:0; font-size: 2.5rem; color: #2c3e50;">CRONOGRAMA DE APRESENTAÇÃO - PICQ</h1>
             <p style="font-size: 1.2rem; color: #666;">Hospital Universitário Onofre Lopes</p>
         </div>
         <div id="escala-grid-export"></div>
+        <div style="margin-top: 20px; padding: 7px 14px; border-top: 3px solid #2c3e50; background: #f0f4f8; display: flex; justify-content: space-between; align-items: center;">
+            <strong style="font-size: 0.85rem; color: #2c3e50; letter-spacing: 1.5px; text-transform: uppercase;">GUILIS</strong>
+            <span style="font-size: 0.75rem; color: #555;">por Guilherme Mota &middot; Patologia HUOL</span>
+        </div>
     </div>
 
     <div class="container report-box" id="capture-report" style="display: none; background:#fff;">
@@ -162,6 +178,13 @@
     let dragSrcInfo = null;
 
     const configTipos = { 'ch': { l: 'Caso', i: 'HUOL' }, 'th': { l: 'Questão', i: 'HUOL' }, 'cl': { l: 'Caso', i: 'LIGA' }, 'tl': { l: 'Questão', i: 'LIGA' } };
+
+    function atualizarTituloEscala() {
+        const ed = document.getElementById('edicao-picq').value.trim();
+        const sufixo = ed ? ` — Edição ${ed}` : '';
+        document.getElementById('titulo-escala-interativa').innerText = `CRONOGRAMA PICQ${sufixo}`;
+        document.getElementById('titulo-escala-export').innerText = `CRONOGRAMA DE APRESENTAÇÃO - PICQ${sufixo}`;
+    }
 
     function init() {
         renderBalanceamento(); gerarCamposDatas(); atualizarPrevisao(); renderPool();
@@ -395,7 +418,9 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
             doc.setTextColor(255, 255, 255);
-            doc.text('CRONOGRAMA PICQ — FOLHA DE ANOTAÇÕES DO PROFESSOR', pageW / 2, 9, { align: 'center' });
+            const edPDF = document.getElementById('edicao-picq').value.trim();
+            const tituloPDF = edPDF ? `CRONOGRAMA PICQ — Edição ${edPDF} — FOLHA DE ANOTAÇÕES DO PROFESSOR` : 'CRONOGRAMA PICQ — FOLHA DE ANOTAÇÕES DO PROFESSOR';
+            doc.text(tituloPDF, pageW / 2, 9, { align: 'center' });
             doc.setTextColor(0, 0, 0);
             y = marginTop + 4;
         }
@@ -516,7 +541,9 @@
             doc.setFont('helvetica', 'italic');
             doc.setFontSize(7.5);
             doc.setTextColor(150, 150, 150);
-            doc.text(`GUILIS - PICQ v4.4  |  Gerado em ${new Date().toLocaleDateString('pt-BR')}`, marginLeft, pageH - 8);
+            const edRodape = document.getElementById('edicao-picq').value.trim();
+            const rodapeEd = edRodape ? `  |  Edição ${edRodape}` : '';
+            doc.text(`GUILIS - PICQ v4.4${rodapeEd}  |  Gerado em ${new Date().toLocaleDateString('pt-BR')}`, marginLeft, pageH - 8);
             doc.text(`Página ${p} / ${totalPages}`, pageW - marginRight, pageH - 8, { align: 'right' });
         }
 

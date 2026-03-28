@@ -33,7 +33,7 @@
             flex-shrink: 0;
             flex-wrap: wrap;
         }
-        #action-bar span { color: #aaa; font-size: 0.8rem; font-weight: bold; margin-right: 4px; }
+        #action-bar span { color: #7fa8d4; font-size: 0.85rem; font-weight: 900; margin-right: 4px; letter-spacing: 1px; }
         .ab-btn {
             padding: 7px 14px;
             border-radius: 4px;
@@ -120,13 +120,17 @@
 
         /* ── CRÉDITO ── */
         #credit-line {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #000;
-            font-weight: 700;
-            margin-top: 8px;
-            letter-spacing: 0.02em;
+            margin-top: 14px;
+            padding: 7px 14px;
+            border-top: 3px solid #4a66b4;
+            background: #f0f4f8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 5px 5px;
         }
+        #credit-line strong { font-size: 0.85rem; color: #4a66b4; letter-spacing: 1.5px; text-transform: uppercase; }
+        #credit-line span { font-size: 0.75rem; color: #555; }
 
         /* ── AUTOCOMPLETE ── */
         #autocomplete-list { position: fixed; background: white; border: 1px solid #000; z-index: 1000; width: 160px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
@@ -181,7 +185,7 @@
 
             <!-- Crédito — sempre presente, visível só na imagem -->
             <div id="credit-line">
-                Escala criada utilizando gerador de escala GUILIS &mdash; Guilherme Mota &mdash; Ex‑residente
+                <strong>GUILIS</strong><span>por Guilherme Mota &middot; Patologia HUOL</span>
             </div>
         </div>
     </div>
