@@ -154,6 +154,16 @@
         }
         video { width: 100%; border-radius: 8px; background: #000; display: block; }
 
+        .formato {
+            font-size: 0.8rem;
+            line-height: 1.45;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .formato.ok { background: #eafaf1; color: #0e6655; border: 1px solid #a9dfbf; }
+        .formato.alerta { background: #fdf2e9; color: #7e5109; border: 1px solid #f5cba7; }
+
         .historico { margin-top: 25px; }
         .historico h3 {
             font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
@@ -189,7 +199,7 @@
     <header>
         <a href="../index.html" class="menu">← Menu Principal</a>
         <h1>🎯 SORTEADOR</h1>
-        <p>Roleta para definição de escalas — com vídeo do sorteio para auditoria</p>
+        <p>Roleta para definição de escalas — exporta o vídeo do sorteio em MP4 para auditoria</p>
     </header>
 
     <div class="layout">
@@ -223,6 +233,7 @@
             <div class="bloco-video" id="blocoVideo" style="display:none;">
                 <h3>Vídeo do sorteio (auditoria)</h3>
                 <video id="previa" controls playsinline></video>
+                <div class="formato" id="formato"></div>
                 <button class="btn-video" id="btnBaixar">⬇️ Baixar vídeo do sorteio</button>
             </div>
 
@@ -256,6 +267,7 @@
     var blocoVideo = document.getElementById('blocoVideo');
     var avisoVideo = document.getElementById('avisoVideo');
     var previa = document.getElementById('previa');
+    var elFormato = document.getElementById('formato');
     var elHistorico = document.getElementById('historico');
     var blocoHistorico = document.getElementById('blocoHistorico');
 
@@ -662,43 +674,164 @@
     /* ---------------- Gravação de vídeo ---------------- */
 
     var suportaGravacao = !!(canvas.captureStream && window.MediaRecorder);
-    var gravador = null, pedacos = [];
+    var gravador = null, pedacos = [], audio = null;
 
-    function melhorMime() {
-        var opcoes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
-        for (var i = 0; i < opcoes.length; i++) {
-            if (window.MediaRecorder.isTypeSupported && window.MediaRecorder.isTypeSupported(opcoes[i])) {
-                return opcoes[i];
-            }
+    // O WhatsApp só reproduz MP4 com vídeo H.264, então tentamos esses formatos
+    // primeiro e só caímos no WebM se o navegador não oferecer nada melhor.
+    function candidatos() {
+        var lista = [
+            'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+            'video/mp4;codecs=avc1.4D401E,mp4a.40.2',
+            'video/mp4;codecs=avc1.42E01E',
+            'video/mp4;codecs=avc1.4D401E',
+            'video/mp4;codecs=avc1',
+            'video/mp4;codecs=h264,aac',
+            'video/mp4;codecs=h264'
+        ];
+
+        // "video/mp4" puro é H.264 no Safari, mas pode ser AV1 em builds do
+        // Chromium sem codecs proprietários — nesse caso não serve para o WhatsApp.
+        var suporta = window.MediaRecorder.isTypeSupported;
+        var mp4Generico = suporta && MediaRecorder.isTypeSupported('video/mp4');
+        var temAvc = suporta && (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.42E01E') ||
+                                 MediaRecorder.isTypeSupported('video/mp4;codecs=avc1'));
+        var soAv1 = suporta && !temAvc && MediaRecorder.isTypeSupported('video/mp4;codecs=av01');
+        if (mp4Generico && !soAv1) lista.push('video/mp4');
+
+        lista.push('video/webm;codecs=vp9,opus', 'video/webm;codecs=vp9',
+                   'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp8', 'video/webm');
+
+        if (!suporta) return lista;
+        return lista.filter(function (m) { return MediaRecorder.isTypeSupported(m); });
+    }
+
+    // Trilha de áudio mudo: alguns players (inclusive o do WhatsApp) engasgam
+    // com arquivos sem faixa de áudio nenhuma.
+    function criarAudioMudo() {
+        try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            var ctxA = new AC();
+            var destino = ctxA.createMediaStreamDestination();
+            var osc = ctxA.createOscillator();
+            var ganho = ctxA.createGain();
+            ganho.gain.value = 0;
+            osc.connect(ganho);
+            ganho.connect(destino);
+            osc.start();
+            var faixa = destino.stream.getAudioTracks()[0];
+            if (!faixa) { ctxA.close(); return null; }
+            return { ctx: ctxA, osc: osc, faixa: faixa };
+        } catch (e) {
+            return null;
         }
-        return '';
+    }
+
+    function encerrarAudio() {
+        if (!audio) return;
+        try { audio.osc.stop(); } catch (e) {}
+        try { audio.faixa.stop(); } catch (e) {}
+        try { audio.ctx.close(); } catch (e) {}
+        audio = null;
+    }
+
+    function montarGravador(stream) {
+        var mimes = candidatos();
+        for (var i = 0; i < mimes.length; i++) {
+            try {
+                return new MediaRecorder(stream, { mimeType: mimes[i], videoBitsPerSecond: 2500000 });
+            } catch (e) { /* tenta o próximo */ }
+        }
+        try { return new MediaRecorder(stream); } catch (e) { return null; }
+    }
+
+    // Lê o cabeçalho do arquivo para informar o formato real que saiu do navegador.
+    function lerCabecalho(blob) {
+        var pedaco = blob.slice(0, 8192);
+        if (pedaco.arrayBuffer) return pedaco.arrayBuffer();
+        return new Promise(function (res, rej) {
+            var fr = new FileReader();
+            fr.onload = function () { res(fr.result); };
+            fr.onerror = rej;
+            fr.readAsArrayBuffer(pedaco);
+        });
+    }
+
+    function detectarFormato(blob) {
+        return lerCabecalho(blob).then(function (buf) {
+            var b = new Uint8Array(buf), s = '';
+            for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+            var ehMp4 = s.indexOf('ftyp') !== -1;
+            var codec = 'desconhecido';
+            if (s.indexOf('avc1') !== -1 || s.indexOf('avc3') !== -1) codec = 'H.264';
+            else if (s.indexOf('hvc1') !== -1 || s.indexOf('hev1') !== -1) codec = 'H.265';
+            else if (s.indexOf('av01') !== -1) codec = 'AV1';
+            else if (s.indexOf('vp09') !== -1 || s.indexOf('V_VP9') !== -1) codec = 'VP9';
+            else if (s.indexOf('vp08') !== -1 || s.indexOf('V_VP8') !== -1) codec = 'VP8';
+            return {
+                container: ehMp4 ? 'MP4' : 'WebM',
+                codec: codec,
+                whatsapp: ehMp4 && (codec === 'H.264' || codec === 'H.265')
+            };
+        }).catch(function () {
+            return { container: blob.type.indexOf('mp4') !== -1 ? 'MP4' : 'WebM',
+                     codec: 'desconhecido', whatsapp: blob.type.indexOf('mp4') !== -1 };
+        });
+    }
+
+    function mostrarFormato(info, tamanho) {
+        var mb = (tamanho / 1048576).toFixed(1).replace('.', ',');
+        if (info.whatsapp) {
+            elFormato.className = 'formato ok';
+            elFormato.textContent = '✅ ' + info.container + ' (' + info.codec + ') · ' + mb +
+                                    ' MB — pode enviar direto no WhatsApp.';
+        } else {
+            elFormato.className = 'formato alerta';
+            elFormato.innerHTML = '⚠️ Este navegador exportou <b>' + info.container +
+                                  (info.codec !== 'desconhecido' ? ' (' + info.codec + ')' : '') +
+                                  '</b> · ' + mb + ' MB. O WhatsApp não abre esse formato — ' +
+                                  'refaça o sorteio no <b>Chrome</b> ou <b>Edge</b> atualizado ' +
+                                  '(ou no Safari, no iPhone) para gerar um MP4.';
+        }
     }
 
     function iniciarGravacao() {
         if (!suportaGravacao) return;
         try {
             var stream = canvas.captureStream(30);
-            var mime = melhorMime();
-            gravador = mime ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2500000 })
-                            : new MediaRecorder(stream);
+
+            audio = criarAudioMudo();
+            if (audio) {
+                try { stream.addTrack(audio.faixa); } catch (e) { encerrarAudio(); }
+            }
+
+            gravador = montarGravador(stream);
+            if (!gravador) throw new Error('sem gravador');
+
             pedacos = [];
             gravador.ondataavailable = function (e) { if (e.data && e.data.size) pedacos.push(e.data); };
             gravador.onstop = function () {
-                var tipo = (gravador && gravador.mimeType) || 'video/webm';
+                encerrarAudio();
+                var tipo = (this.mimeType || 'video/webm').split(';')[0];
                 videoBlob = new Blob(pedacos, { type: tipo });
                 if (videoUrl) URL.revokeObjectURL(videoUrl);
                 videoUrl = URL.createObjectURL(videoBlob);
                 previa.src = videoUrl;
                 blocoVideo.style.display = 'block';
-                var ext = tipo.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
-                nomeArquivo = 'sorteio-' + (estado.codigo || 'guilis') + '.' + ext;
-                elStatus.className = 'status';
-                elStatus.textContent = 'Vídeo pronto para auditoria — ' + nomeArquivo;
+
+                detectarFormato(videoBlob).then(function (info) {
+                    nomeArquivo = 'sorteio-' + (estado.codigo || 'guilis') + '.' +
+                                  (info.container === 'MP4' ? 'mp4' : 'webm');
+                    mostrarFormato(info, videoBlob.size);
+                    elStatus.className = 'status';
+                    elStatus.textContent = 'Vídeo pronto para auditoria — ' + nomeArquivo;
+                });
             };
             gravador.start();
             elStatus.className = 'status rec';
             elStatus.textContent = '● Gravando o sorteio…';
         } catch (e) {
+            encerrarAudio();
             gravador = null;
             suportaGravacao = false;
             avisoVideo.style.display = 'block';
@@ -706,7 +839,11 @@
     }
 
     function pararGravacao() {
-        if (gravador && gravador.state !== 'inactive') gravador.stop();
+        if (gravador && gravador.state !== 'inactive') {
+            gravador.stop();
+        } else {
+            encerrarAudio();
+        }
         gravador = null;
     }
 
