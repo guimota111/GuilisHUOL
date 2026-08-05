@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <title>GUILIS - Sorteador de Escalas</title>
+    <style>
+        :root {
+            --primary: #4a66b4;
+            --accent: #16a085;
+            --gold: #f39c12;
+            --text: #2c3e50;
+            --bg: #f0f2f5;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            padding: 25px 20px 60px 20px;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto 25px auto;
+            text-align: center;
+            position: relative;
+        }
+
+        header a.menu {
+            position: absolute;
+            left: 0;
+            top: 8px;
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        header a.menu:hover { text-decoration: underline; }
+
+        h1 {
+            font-size: 2.2rem;
+            margin: 0;
+            letter-spacing: 2px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        header p { color: #7f8c8d; margin: 5px 0 0 0; font-size: 0.95rem; }
+
+        .layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 25px;
+        }
+
+        #controles { width: 380px; flex-shrink: 0; border-top: 8px solid var(--accent); }
+        #palco { flex: 1; min-width: 340px; border-top: 8px solid var(--gold); }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dfe4ea;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text);
+            background: #fbfcfd;
+        }
+        input[type="text"]:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+        textarea { resize: vertical; min-height: 150px; line-height: 1.5; }
+
+        .campo { margin-bottom: 18px; }
+        .dica { font-size: 0.75rem; color: #95a5a6; margin-top: 5px; }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .chip {
+            background: #eaf6f3;
+            color: #0e6655;
+            border: 1px solid #b7e0d6;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .chip.aviso { background: #fdecea; color: #c0392b; border-color: #f5b7b1; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: filter 0.2s, transform 0.1s;
+            color: white;
+        }
+        button:hover:not(:disabled) { filter: brightness(1.08); }
+        button:active:not(:disabled) { transform: translateY(1px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-sortear { background: var(--accent); font-size: 1.1rem; letter-spacing: 1px; }
+        .btn-video { background: #8e44ad; margin-top: 10px; }
+        .btn-limpar { background: #95a5a6; margin-top: 10px; font-size: 0.8rem; padding: 10px; }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            max-width: 960px;
+            display: block;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e6e9ef;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-align: center;
+            min-height: 20px;
+        }
+        .status.rec { color: #c0392b; font-weight: bold; }
+
+        .bloco-video { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #dfe4ea; }
+        .bloco-video h3 {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
+            color: #7f8c8d; margin: 0 0 10px 0;
+        }
+        video { width: 100%; border-radius: 8px; background: #000; display: block; }
+
+        .historico { margin-top: 25px; }
+        .historico h3 {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
+            color: #7f8c8d; margin: 0 0 10px 0;
+        }
+        .hist-item {
+            font-size: 0.8rem;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border-left: 4px solid var(--gold);
+            border-radius: 4px;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .hist-item b { color: #0e6655; }
+        .hist-item .cod { color: #95a5a6; font-family: monospace; }
+
+        .aviso-box {
+            background: #fef9e7; border: 1px solid #f7dc6f; color: #7d6608;
+            padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-top: 10px;
+        }
+
+        footer { text-align: center; color: #95a5a6; font-size: 0.85rem; margin-top: 50px; }
+
+        @media (max-width: 900px) {
+            #controles { width: 100%; }
+            header a.menu { position: static; display: block; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="../index.html" class="menu">← Menu Principal</a>
+        <h1>🎯 SORTEADOR</h1>
+        <p>Roleta para definição de escalas — com vídeo do sorteio para auditoria</p>
+    </header>
+
+    <div class="layout">
+
+        <div class="panel" id="controles">
+            <div class="campo">
+                <label for="pergunta">Pergunta / Motivo do sorteio</label>
+                <input type="text" id="pergunta" maxlength="140" placeholder="Ex.: Quem fica com a congelação do sábado?">
+            </div>
+
+            <div class="campo">
+                <label for="nomes">Participantes (um por linha)</label>
+                <textarea id="nomes" placeholder="Ana&#10;Bruno&#10;Carla&#10;Daniel"></textarea>
+                <div class="dica">Linhas vazias e nomes repetidos são ignorados.</div>
+                <div class="chips" id="chips"></div>
+            </div>
+
+            <button class="btn-sortear" id="btnSortear">SORTEAR 🎲</button>
+            <button class="btn-limpar" id="btnLimpar">Limpar tudo</button>
+
+            <div class="historico" id="blocoHistorico" style="display:none;">
+                <h3>Histórico da sessão</h3>
+                <div id="historico"></div>
+            </div>
+        </div>
+
+        <div class="panel" id="palco">
+            <canvas id="palcoCanvas" width="960" height="640"></canvas>
+            <div class="status" id="status">Preencha a pergunta e os participantes para começar.</div>
+
+            <div class="bloco-video" id="blocoVideo" style="display:none;">
+                <h3>Vídeo do sorteio (auditoria)</h3>
+                <video id="previa" controls playsinline></video>
+                <button class="btn-video" id="btnBaixar">⬇️ Baixar vídeo do sorteio</button>
+            </div>
+
+            <div class="aviso-box" id="avisoVideo" style="display:none;">
+                Este navegador não suporta gravação de vídeo do canvas. O sorteio funciona normalmente,
+                mas para exportar o vídeo use Chrome, Edge ou Firefox atualizados.
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        Desenvolvido por Guilherme &copy; 2026 | Residência Médica em Patologia - HUOL
+    </footer>
+
+<script>
+(function () {
+    'use strict';
+
+    var canvas = document.getElementById('palcoCanvas');
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+
+    var elPergunta = document.getElementById('pergunta');
+    var elNomes = document.getElementById('nomes');
+    var elChips = document.getElementById('chips');
+    var elStatus = document.getElementById('status');
+    var btnSortear = document.getElementById('btnSortear');
+    var btnLimpar = document.getElementById('btnLimpar');
+    var btnBaixar = document.getElementById('btnBaixar');
+    var blocoVideo = document.getElementById('blocoVideo');
+    var avisoVideo = document.getElementById('avisoVideo');
+    var previa = document.getElementById('previa');
+    var elHistorico = document.getElementById('historico');
+    var blocoHistorico = document.getElementById('blocoHistorico');
+
+    var CORES = ['#4a66b4', '#16a085', '#e67e22', '#8e44ad', '#c0392b', '#2980b9',
+                 '#27ae60', '#d35400', '#7f8c8d', '#db2777', '#0891b2', '#f39c12'];
+
+    /* ---------------- Estado ---------------- */
+    var estado = {
+        pergunta: '',
+        nomes: [],
+        rotacao: 0,
+        vencedor: null,      // índice do vencedor (revelado)
+        alvo: null,          // índice sorteado (ainda oculto durante o giro)
+        codigo: '',
+        dataHora: '',
+        fase: 'ocioso',      // ocioso | intro | girando | revelado
+        confete: []
+    };
+
+    var animando = false;
+    var videoBlob = null, videoUrl = null, nomeArquivo = 'sorteio.webm';
+
+    /* ---------------- Utilidades ---------------- */
+
+    function lerNomes() {
+        var vistos = {};
+        var saida = [];
+        var linhas = elNomes.value.split('\n');
+        for (var i = 0; i < linhas.length; i++) {
+            var n = linhas[i].replace(/\s+/g, ' ').trim();
+            if (!n) continue;
+            var chave = n.toLowerCase();
+            if (vistos[chave]) continue;
+            vistos[chave] = true;
+            saida.push(n);
+        }
+        return saida;
+    }
+
+    function sorteioSeguro(n) {
+        if (window.crypto && window.crypto.getRandomValues) {
+            var limite = Math.floor(4294967296 / n) * n;
+            var buf = new Uint32Array(1);
+            var v;
+            do {
+                window.crypto.getRandomValues(buf);
+                v = buf[0];
+            } while (v >= limite);
+            return v % n;
+        }
+        return Math.floor(Math.random() * n);
+    }
+
+    function hashSimples(txt) {
+        var h1 = 0x811c9dc5, h2 = 0x1000193;
+        for (var i = 0; i < txt.length; i++) {
+            h1 = (h1 ^ txt.charCodeAt(i)) >>> 0;
+            h1 = (h1 * 16777619) >>> 0;
+            h2 = (h2 + txt.charCodeAt(i) * (i + 7)) >>> 0;
+        }
+        return (h1.toString(16) + h2.toString(16)).toUpperCase().slice(0, 10);
+    }
+
+    function gerarCodigo(payload) {
+        if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest && window.TextEncoder) {
+            return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload))
+                .then(function (buf) {
+                    var bytes = new Uint8Array(buf);
+                    var s = '';
+                    for (var i = 0; i < 5; i++) s += ('0' + bytes[i].toString(16)).slice(-2);
+                    return s.toUpperCase();
+                })
+                .catch(function () { return hashSimples(payload); });
+        }
+        return Promise.resolve(hashSimples(payload));
+    }
+
+    function agoraTexto() {
+        var d = new Date();
+        function p(x) { return ('0' + x).slice(-2); }
+        return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() +
+               ' às ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+    }
+
+    function encurtar(texto, larguraMax) {
+        if (ctx.measureText(texto).width <= larguraMax) return texto;
+        var t = texto;
+        while (t.length > 1 && ctx.measureText(t + '…').width > larguraMax) t = t.slice(0, -1);
+        return t + '…';
+    }
+
+    // reduz o corpo da fonte até o texto caber (usado no nome do vencedor)
+    function fonteQueCabe(texto, larguraMax, tamMax, tamMin) {
+        for (var t = tamMax; t > tamMin; t -= 1) {
+            ctx.font = '800 ' + t + 'px Segoe UI, Arial, sans-serif';
+            if (ctx.measureText(texto).width <= larguraMax) return t;
+        }
+        return tamMin;
+    }
+
+    function quebrarLinhas(texto, larguraMax, maxLinhas) {
+        var palavras = texto.split(' ');
+        var linhas = [], atual = '';
+        for (var i = 0; i < palavras.length; i++) {
+            var teste = atual ? atual + ' ' + palavras[i] : palavras[i];
+            if (ctx.measureText(teste).width > larguraMax && atual) {
+                linhas.push(atual);
+                atual = palavras[i];
+                if (linhas.length === maxLinhas) break;
+            } else {
+                atual = teste;
+            }
+        }
+        if (linhas.length < maxLinhas && atual) linhas.push(atual);
+        if (linhas.length === maxLinhas) {
+            linhas[maxLinhas - 1] = encurtar(linhas[maxLinhas - 1], larguraMax);
+        }
+        return linhas;
+    }
+
+    /* ---------------- Desenho ---------------- */
+
+    var CX = 290, CY = 395, RAIO = 180;
+
+    function desenharCena() {
+        ctx.clearRect(0, 0, W, H);
+
+        // fundo
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, W, H);
+
+        desenharCabecalho();
+        desenharPergunta();
+        desenharRoleta();
+        desenharPainel();
+        desenharConfete();
+    }
+
+    function desenharCabecalho() {
+        ctx.fillStyle = '#16a085';
+        ctx.fillRect(0, 0, W, 62);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.font = '800 24px Segoe UI, Arial, sans-serif';
+        ctx.fillText('GUILIS · SORTEADOR', 30, 32);
+
+        ctx.textAlign = 'right';
+        ctx.font = '600 15px Segoe UI, Arial, sans-serif';
+        ctx.fillText(estado.dataHora || agoraTexto(), W - 30, 32);
+    }
+
+    function desenharPergunta() {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '700 13px Segoe UI, Arial, sans-serif';
+        ctx.fillText('PERGUNTA DO SORTEIO', W / 2, 88);
+
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = '800 27px Segoe UI, Arial, sans-serif';
+        var texto = estado.pergunta || 'Sorteio sem pergunta definida';
+        var linhas = quebrarLinhas(texto, W - 120, 2);
+        for (var i = 0; i < linhas.length; i++) {
+            ctx.fillText(linhas[i], W / 2, 120 + i * 32);
+        }
+    }
+
+    function desenharRoleta() {
+        var n = estado.nomes.length;
+
+        // sombra da base
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(CX, CY + 6, RAIO + 12, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(44,62,80,0.10)';
+        ctx.fill();
+        ctx.restore();
+
+        if (n === 0) {
+            ctx.beginPath();
+            ctx.arc(CX, CY, RAIO, 0, Math.PI * 2);
+            ctx.fillStyle = '#e9edf2';
+            ctx.fill();
+            ctx.fillStyle = '#95a5a6';
+            ctx.font = '700 18px Segoe UI, Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Sem participantes', CX, CY);
+            desenharPonteiro();
+            return;
+        }
+
+        var setor = (Math.PI * 2) / n;
+        var fonteNome = n <= 8 ? 18 : (n <= 14 ? 15 : (n <= 22 ? 12 : 10));
+
+        ctx.save();
+        ctx.translate(CX, CY);
+        ctx.rotate(estado.rotacao);
+
+        for (var i = 0; i < n; i++) {
+            var ini = i * setor, fim = ini + setor;
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, RAIO, ini, fim);
+            ctx.closePath();
+            ctx.fillStyle = CORES[i % CORES.length];
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.stroke();
+
+            if (estado.vencedor === i) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, RAIO, ini, fim);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255,255,255,0.30)';
+                ctx.fill();
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = '#f1c40f';
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // nome
+            ctx.save();
+            ctx.rotate(ini + setor / 2);
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 ' + fonteNome + 'px Segoe UI, Arial, sans-serif';
+            ctx.shadowColor = 'rgba(0,0,0,0.35)';
+            ctx.shadowBlur = 3;
+            ctx.fillText(encurtar(estado.nomes[i], RAIO - 55), RAIO - 16, 0);
+            ctx.restore();
+        }
+
+        ctx.restore();
+
+        // aro
+        ctx.beginPath();
+        ctx.arc(CX, CY, RAIO, 0, Math.PI * 2);
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = '#2c3e50';
+        ctx.stroke();
+
+        // eixo central
+        ctx.beginPath();
+        ctx.arc(CX, CY, 34, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#2c3e50';
+        ctx.stroke();
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = '800 22px Segoe UI, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(n), CX, CY);
+
+        desenharPonteiro();
+    }
+
+    function desenharPonteiro() {
+        var topo = CY - RAIO;
+        ctx.beginPath();
+        ctx.moveTo(CX, topo + 26);
+        ctx.lineTo(CX - 20, topo - 18);
+        ctx.lineTo(CX + 20, topo - 18);
+        ctx.closePath();
+        ctx.fillStyle = '#f1c40f';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#2c3e50';
+        ctx.stroke();
+    }
+
+    function desenharPainel() {
+        var x = 560, largura = W - x - 30;
+
+        // lista de participantes
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '700 13px Segoe UI, Arial, sans-serif';
+        ctx.fillText('PARTICIPANTES (' + estado.nomes.length + ')', x, 195);
+
+        ctx.beginPath();
+        ctx.moveTo(x, 208);
+        ctx.lineTo(x + largura, 208);
+        ctx.strokeStyle = '#dfe4ea';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        var n = estado.nomes.length;
+        var duasColunas = n > 12;
+        var maxItens = duasColunas ? 32 : 12;
+        var visiveis = Math.min(n, maxItens);
+        var alturaLinha = duasColunas ? 17 : 24;
+        var fonte = duasColunas ? 12 : 15;
+        var colLargura = duasColunas ? largura / 2 : largura;
+        var porColuna = duasColunas ? Math.ceil(visiveis / 2) : visiveis;
+
+        ctx.font = '600 ' + fonte + 'px Segoe UI, Arial, sans-serif';
+        for (var i = 0; i < visiveis; i++) {
+            var col = duasColunas && i >= porColuna ? 1 : 0;
+            var linha = col === 1 ? i - porColuna : i;
+            var px = x + col * colLargura;
+            var py = 232 + linha * alturaLinha;
+            var ehVencedor = estado.vencedor === i;
+            ctx.fillStyle = ehVencedor ? '#0e6655' : '#2c3e50';
+            ctx.font = (ehVencedor ? '800 ' : '600 ') + fonte + 'px Segoe UI, Arial, sans-serif';
+            ctx.fillText(encurtar((i + 1) + '. ' + estado.nomes[i], colLargura - 12), px, py);
+        }
+        if (n > visiveis) {
+            ctx.fillStyle = '#95a5a6';
+            ctx.font = 'italic 600 12px Segoe UI, Arial, sans-serif';
+            ctx.fillText('+ ' + (n - visiveis) + ' participante(s)', x, 232 + porColuna * alturaLinha + 4);
+        }
+
+        // caixa de resultado
+        var cy = 470, ch = 108;
+        ctx.beginPath();
+        var r = 12;
+        ctx.moveTo(x + r, cy);
+        ctx.arcTo(x + largura, cy, x + largura, cy + ch, r);
+        ctx.arcTo(x + largura, cy + ch, x, cy + ch, r);
+        ctx.arcTo(x, cy + ch, x, cy, r);
+        ctx.arcTo(x, cy, x + largura, cy, r);
+        ctx.closePath();
+
+        var revelado = estado.vencedor !== null;
+        ctx.fillStyle = revelado ? '#0e6655' : '#eceff3';
+        ctx.fill();
+
+        ctx.textAlign = 'center';
+        var meioX = x + largura / 2;
+        if (revelado) {
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            ctx.font = '700 13px Segoe UI, Arial, sans-serif';
+            ctx.fillText('RESULTADO DO SORTEIO', meioX, cy + 26);
+            ctx.fillStyle = '#ffffff';
+            var nomeVencedor = estado.nomes[estado.vencedor];
+            var corpo = fonteQueCabe(nomeVencedor, largura - 28, 30, 15);
+            ctx.font = '800 ' + corpo + 'px Segoe UI, Arial, sans-serif';
+            ctx.fillText(encurtar(nomeVencedor, largura - 28), meioX, cy + 66);
+        } else {
+            ctx.fillStyle = '#95a5a6';
+            ctx.font = '800 20px Segoe UI, Arial, sans-serif';
+            ctx.fillText(estado.fase === 'girando' ? 'GIRANDO…' : 'AGUARDANDO SORTEIO', meioX, cy + ch / 2);
+        }
+
+        // rodapé de auditoria
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#95a5a6';
+        ctx.font = '600 12px Segoe UI, Arial, sans-serif';
+        ctx.fillText('Sorteio aleatório (crypto) · Código de verificação: ' +
+                     (estado.codigo || '—'), 30, H - 22);
+        ctx.textAlign = 'right';
+        ctx.fillText('Patologia HUOL', W - 30, H - 22);
+    }
+
+    function desenharConfete() {
+        for (var i = 0; i < estado.confete.length; i++) {
+            var p = estado.confete[i];
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.cor;
+            ctx.fillRect(-p.tam / 2, -p.tam / 4, p.tam, p.tam / 2);
+            ctx.restore();
+        }
+    }
+
+    function criarConfete() {
+        estado.confete = [];
+        for (var i = 0; i < 110; i++) {
+            estado.confete.push({
+                x: Math.random() * W,
+                y: -Math.random() * H * 0.6,
+                vx: (Math.random() - 0.5) * 1.6,
+                vy: 2.2 + Math.random() * 3.2,
+                rot: Math.random() * Math.PI,
+                vrot: (Math.random() - 0.5) * 0.25,
+                tam: 7 + Math.random() * 8,
+                cor: CORES[Math.floor(Math.random() * CORES.length)]
+            });
+        }
+    }
+
+    function atualizarConfete() {
+        for (var i = 0; i < estado.confete.length; i++) {
+            var p = estado.confete[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rot += p.vrot;
+        }
+    }
+
+    /* ---------------- Gravação de vídeo ---------------- */
+
+    var suportaGravacao = !!(canvas.captureStream && window.MediaRecorder);
+    var gravador = null, pedacos = [];
+
+    function melhorMime() {
+        var opcoes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+        for (var i = 0; i < opcoes.length; i++) {
+            if (window.MediaRecorder.isTypeSupported && window.MediaRecorder.isTypeSupported(opcoes[i])) {
+                return opcoes[i];
+            }
+        }
+        return '';
+    }
+
+    function iniciarGravacao() {
+        if (!suportaGravacao) return;
+        try {
+            var stream = canvas.captureStream(30);
+            var mime = melhorMime();
+            gravador = mime ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2500000 })
+                            : new MediaRecorder(stream);
+            pedacos = [];
+            gravador.ondataavailable = function (e) { if (e.data && e.data.size) pedacos.push(e.data); };
+            gravador.onstop = function () {
+                var tipo = (gravador && gravador.mimeType) || 'video/webm';
+                videoBlob = new Blob(pedacos, { type: tipo });
+                if (videoUrl) URL.revokeObjectURL(videoUrl);
+                videoUrl = URL.createObjectURL(videoBlob);
+                previa.src = videoUrl;
+                blocoVideo.style.display = 'block';
+                var ext = tipo.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+                nomeArquivo = 'sorteio-' + (estado.codigo || 'guilis') + '.' + ext;
+                elStatus.className = 'status';
+                elStatus.textContent = 'Vídeo pronto para auditoria — ' + nomeArquivo;
+            };
+            gravador.start();
+            elStatus.className = 'status rec';
+            elStatus.textContent = '● Gravando o sorteio…';
+        } catch (e) {
+            gravador = null;
+            suportaGravacao = false;
+            avisoVideo.style.display = 'block';
+        }
+    }
+
+    function pararGravacao() {
+        if (gravador && gravador.state !== 'inactive') gravador.stop();
+        gravador = null;
+    }
+
+    btnBaixar.addEventListener('click', function () {
+        if (!videoUrl) return;
+        var a = document.createElement('a');
+        a.href = videoUrl;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+
+    /* ---------------- Animação do sorteio ---------------- */
+
+    var DUR_INTRO = 1200, DUR_GIRO = 4600, DUR_FIM = 2800;
+
+    function facilitar(t) { return 1 - Math.pow(1 - t, 4); }
+
+    function animar(inicio, rotInicial, rotFinal) {
+        var t0 = performance.now();
+
+        function quadro(agora) {
+            var t = agora - t0;
+
+            if (t < DUR_INTRO) {
+                estado.fase = 'intro';
+                estado.rotacao = rotInicial + (t / 1000) * 0.35;
+            } else if (t < DUR_INTRO + DUR_GIRO) {
+                estado.fase = 'girando';
+                var p = facilitar((t - DUR_INTRO) / DUR_GIRO);
+                var base = rotInicial + (DUR_INTRO / 1000) * 0.35;
+                estado.rotacao = base + (rotFinal - base) * p;
+            } else {
+                if (estado.vencedor === null) {
+                    estado.fase = 'revelado';
+                    estado.rotacao = rotFinal;
+                    estado.vencedor = estado.alvo;
+                    criarConfete();
+                    registrarHistorico();
+                }
+                atualizarConfete();
+            }
+
+            desenharCena();
+
+            if (t < DUR_INTRO + DUR_GIRO + DUR_FIM) {
+                requestAnimationFrame(quadro);
+            } else {
+                animando = false;
+                btnSortear.disabled = false;
+                pararGravacao();
+                if (!suportaGravacao) {
+                    elStatus.className = 'status';
+                    elStatus.textContent = 'Sorteado(a): ' + estado.nomes[estado.vencedor] +
+                                          ' · código ' + estado.codigo;
+                }
+            }
+        }
+
+        requestAnimationFrame(quadro);
+    }
+
+    function registrarHistorico() {
+        var div = document.createElement('div');
+        div.className = 'hist-item';
+        div.innerHTML = '<b>' + escapar(estado.nomes[estado.vencedor]) + '</b> — ' +
+                        escapar(estado.pergunta || 'Sorteio sem pergunta') +
+                        '<br>' + estado.dataHora + ' · ' + estado.nomes.length +
+                        ' participantes · <span class="cod">' + estado.codigo + '</span>';
+        elHistorico.insertBefore(div, elHistorico.firstChild);
+        blocoHistorico.style.display = 'block';
+    }
+
+    function escapar(s) {
+        return String(s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    }
+
+    /* ---------------- Interação ---------------- */
+
+    function atualizarPreview() {
+        estado.pergunta = elPergunta.value.trim();
+        if (!animando) {
+            estado.nomes = lerNomes();
+            estado.vencedor = null;
+            estado.alvo = null;
+            estado.confete = [];
+            estado.fase = 'ocioso';
+            desenharCena();
+        }
+        renderChips();
+    }
+
+    function renderChips() {
+        var nomes = lerNomes();
+        elChips.innerHTML = '';
+        if (!nomes.length) return;
+        var span = document.createElement('span');
+        span.className = 'chip' + (nomes.length < 2 ? ' aviso' : '');
+        span.textContent = nomes.length + ' participante' + (nomes.length > 1 ? 's' : '') +
+                           (nomes.length < 2 ? ' — mínimo de 2' : '');
+        elChips.appendChild(span);
+    }
+
+    btnSortear.addEventListener('click', function () {
+        if (animando) return;
+
+        var nomes = lerNomes();
+        var pergunta = elPergunta.value.trim();
+
+        if (!pergunta) {
+            elStatus.className = 'status';
+            elStatus.textContent = 'Escreva a pergunta do sorteio antes de continuar.';
+            elPergunta.focus();
+            return;
+        }
+        if (nomes.length < 2) {
+            elStatus.className = 'status';
+            elStatus.textContent = 'Informe pelo menos 2 participantes.';
+            elNomes.focus();
+            return;
+        }
+
+        animando = true;
+        btnSortear.disabled = true;
+        blocoVideo.style.display = 'none';
+
+        estado.pergunta = pergunta;
+        estado.nomes = nomes;
+        estado.vencedor = null;
+        estado.confete = [];
+        estado.dataHora = agoraTexto();
+        estado.alvo = sorteioSeguro(nomes.length);
+
+        var payload = pergunta + '|' + nomes.join(',') + '|' + estado.dataHora + '|' + nomes[estado.alvo];
+
+        gerarCodigo(payload).then(function (codigo) {
+            estado.codigo = codigo;
+
+            var setor = (Math.PI * 2) / nomes.length;
+            var rotInicial = estado.rotacao % (Math.PI * 2);
+            estado.rotacao = rotInicial;
+
+            // ponteiro no topo (-PI/2): alinha o centro do setor sorteado sob ele
+            var desejada = -Math.PI / 2 - (estado.alvo + 0.5) * setor;
+            var base = rotInicial + (DUR_INTRO / 1000) * 0.35;
+            var delta = ((desejada - base) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+            var rotFinal = base + Math.PI * 2 * 6 + delta;
+
+            desenharCena();
+            iniciarGravacao();
+            animar(performance.now(), rotInicial, rotFinal);
+        });
+    });
+
+    btnLimpar.addEventListener('click', function () {
+        if (animando) return;
+        elPergunta.value = '';
+        elNomes.value = '';
+        estado.codigo = '';
+        estado.dataHora = '';
+        estado.rotacao = 0;
+        blocoVideo.style.display = 'none';
+        elStatus.className = 'status';
+        elStatus.textContent = 'Preencha a pergunta e os participantes para começar.';
+        atualizarPreview();
+    });
+
+    elPergunta.addEventListener('input', atualizarPreview);
+    elNomes.addEventListener('input', atualizarPreview);
+
+    if (!suportaGravacao) avisoVideo.style.display = 'block';
+
+    atualizarPreview();
+})();
+</script>
+
+</body>
+</html>
