@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUILIS — Calculadora de Próstata (mapeamento livre)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hide-adv .col-adv { display: none; }
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="bg-gray-100 p-3 font-sans text-sm">
+<div class="max-w-7xl mx-auto">
+
+    <header class="mb-3 flex flex-wrap items-center gap-3">
+        <a href="../index.html" class="text-sm font-bold text-blue-600 hover:text-blue-800 no-underline">← Menu</a>
+        <h1 class="text-xl font-bold text-gray-800">Calculadora de Próstata — Mapeamento Livre</h1>
+        <span class="text-xs text-gray-400">Você define quantos cassetes existem e quais topografias eles representam</span>
+        <a href="../MascaraProstata/index.html"
+           class="ml-auto text-xs text-gray-500 hover:text-blue-700 border border-gray-300 rounded px-2 py-1">
+            Máscara fixa 34 cassetes (HUOL) →
+        </a>
+    </header>
+
+    <div class="flex flex-col lg:flex-row gap-3 items-start">
+
+        <!-- ==================== COLUNA ESQUERDA ==================== -->
+        <div class="flex-1 space-y-3 w-full min-w-0">
+
+            <!-- ---------- 1. MAPEAMENTO ---------- -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-4 py-2 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-2">
+                    <div>
+                        <h2 class="font-bold text-gray-700">1 · Mapeamento dos cassetes</h2>
+                        <p class="text-xs text-gray-400">Diga quantos cassetes há e agrupe-os por topografia (ex.: <span class="font-mono">1-15</span>, <span class="font-mono">1,3,5</span>, <span class="font-mono">1-4,9</span>)</p>
+                    </div>
+                    <button onclick="toggleMapa()" id="btnToggleMapa"
+                        class="text-xs text-gray-500 hover:text-gray-800 border border-gray-300 rounded px-2 py-1">
+                        Recolher
+                    </button>
+                </div>
+
+                <div id="painelMapa" class="p-3 space-y-3">
+
+                    <!-- linha de controles -->
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Total de cassetes</label>
+                            <input type="number" min="1" max="200" step="1" id="inTotal" value="34"
+                                onchange="setTotal(this.value)"
+                                class="w-24 border rounded p-1 text-center focus:ring-1 focus:ring-blue-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">G4% / G5% informados como</label>
+                            <select id="inModo" onchange="setModo(this.value)"
+                                class="border rounded p-1 text-xs focus:ring-1 focus:ring-blue-400">
+                                <option value="tumor">% do TUMOR daquele cassete (padrão)</option>
+                                <option value="cassete">% da ÁREA do cassete</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Modelos salvos</label>
+                            <div class="flex gap-1">
+                                <select id="selModelos" class="border rounded p-1 text-xs w-52 focus:ring-1 focus:ring-blue-400"></select>
+                                <button onclick="carregarModelo()" class="text-xs border border-blue-300 text-blue-700 hover:bg-blue-50 rounded px-2">Carregar</button>
+                                <button onclick="salvarModelo()" class="text-xs border border-green-300 text-green-700 hover:bg-green-50 rounded px-2">Salvar atual</button>
+                                <button onclick="excluirModelo()" class="text-xs border border-red-200 text-red-500 hover:bg-red-50 rounded px-2">Excluir</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- tabela de grupos -->
+                    <div class="border rounded overflow-hidden">
+                        <table class="w-full text-xs">
+                            <thead class="bg-gray-100 text-gray-500 uppercase tracking-wide">
+                                <tr>
+                                    <th class="px-2 py-1 w-6"></th>
+                                    <th class="px-2 py-1 text-left">Topografia (nome que aparecerá no resumo)</th>
+                                    <th class="px-2 py-1 text-left w-36">Cassetes</th>
+                                    <th class="px-2 py-1 text-left w-40">Tipo de tecido</th>
+                                    <th class="px-2 py-1 text-left w-28">Lado</th>
+                                    <th class="px-2 py-1 w-16"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaGrupos"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="addGrupo()"
+                            class="text-xs bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-1.5 font-bold">+ Adicionar topografia</button>
+                        <button onclick="dividirIgualmente()"
+                            class="text-xs border border-gray-300 hover:bg-gray-50 rounded px-3 py-1.5">Dividir igualmente…</button>
+                        <button onclick="limparMapeamento()"
+                            class="text-xs border border-red-200 text-red-500 hover:bg-red-50 rounded px-3 py-1.5">Limpar mapeamento</button>
+                    </div>
+
+                    <!-- régua visual -->
+                    <div>
+                        <div class="text-xs text-gray-400 mb-1">Mapa dos cassetes</div>
+                        <div id="reguaCassetes" class="flex flex-wrap gap-1"></div>
+                    </div>
+
+                    <div id="avisosMapa" class="space-y-1"></div>
+                </div>
+            </div>
+
+            <!-- ---------- 2. DADOS POR CASSETE ---------- -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-4 py-2 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-2">
+                    <div>
+                        <h2 class="font-bold text-gray-700">2 · Dados por cassete</h2>
+                        <p class="text-xs text-gray-400" id="legendaModo"></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                            <input type="checkbox" id="chkAvancado" onchange="toggleAvancado()"> colunas avançadas
+                        </label>
+                        <button onclick="limparDados()"
+                            class="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 rounded px-2 py-1 transition">
+                            Limpar dados
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-y-auto" style="max-height:620px">
+                    <table class="w-full text-xs border-collapse hide-adv" id="tblDados">
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-gray-100 border-b text-gray-500 uppercase tracking-wide">
+                                <th class="px-2 py-2 text-center w-8">#</th>
+                                <th class="px-1 py-2 text-center w-20">Tumor %</th>
+                                <th class="px-1 py-2 text-center w-20">G4 %</th>
+                                <th class="px-1 py-2 text-center w-20">G5 %</th>
+                                <th class="px-1 py-2 text-center w-32">Margem (mm)</th>
+                                <th class="px-1 py-2 text-center w-16 col-adv">EPE</th>
+                                <th class="px-1 py-2 text-center w-24 col-adv">Gleason margem</th>
+                                <th class="px-1 py-2 text-center w-8"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaCassetes"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ---------- 3. DETALHE POR TOPOGRAFIA ---------- -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-4 py-2 bg-gray-50 border-b">
+                    <h2 class="font-bold text-gray-700">3 · Detalhe por topografia</h2>
+                    <p class="text-xs text-gray-400">Cada linha já traz o que é preciso para descrever a localização do tumor</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-100 text-gray-500 uppercase tracking-wide">
+                            <tr>
+                                <th class="px-2 py-2 text-left">Topografia</th>
+                                <th class="px-2 py-2 text-center w-24">Cassetes com tumor</th>
+                                <th class="px-2 py-2 text-center w-24">% da região</th>
+                                <th class="px-2 py-2 text-center w-24">% do órgão</th>
+                                <th class="px-2 py-2 text-center w-24">Gleason</th>
+                                <th class="px-2 py-2 text-center w-20">G4 %</th>
+                                <th class="px-2 py-2 text-center w-20">G5 %</th>
+                                <th class="px-2 py-2 text-center w-28">Margem</th>
+                                <th class="px-2 py-2 text-center w-16">EPE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaTopografias"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- fim coluna esquerda -->
+
+        <!-- ==================== COLUNA DIREITA ==================== -->
+        <div class="w-full lg:w-80 space-y-3 shrink-0">
+
+            <!-- Resultados principais -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 lg:sticky lg:top-3">
+                <h3 class="font-bold text-blue-800 text-xs uppercase mb-2">Resultados</h3>
+                <div class="space-y-1">
+                    <div class="bg-white rounded border p-2 text-center">
+                        <span class="block text-[10px] text-gray-400 uppercase">Volume tumoral (% do órgão)</span>
+                        <span id="resVol" class="text-3xl font-bold text-blue-700">0,0%</span>
+                        <span id="resVolG" class="block text-[10px] text-gray-400"></span>
+                    </div>
+                    <div class="bg-white rounded border p-2 text-center">
+                        <span class="block text-[10px] text-gray-400 uppercase">Gleason global</span>
+                        <span id="resGleason" class="text-3xl font-bold text-red-600">—</span>
+                        <span id="resGrupo" class="block text-[10px] text-gray-500"></span>
+                        <span id="resTerciario" class="block text-[10px] text-orange-600 font-semibold"></span>
+                    </div>
+                    <div class="bg-white rounded border p-2 grid grid-cols-3 text-center">
+                        <div>
+                            <span class="block text-[10px] text-gray-400">G3</span>
+                            <span id="resMG3" class="font-bold text-gray-600">0,0%</span>
+                        </div>
+                        <div class="border-l border-r">
+                            <span class="block text-[10px] text-gray-400">G4</span>
+                            <span id="resMG4" class="font-bold text-orange-600">0,0%</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-gray-400">G5</span>
+                            <span id="resMG5" class="font-bold text-red-700">0,0%</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded border p-2 text-center">
+                        <span class="block text-[10px] text-gray-400 uppercase">Cassetes acometidos</span>
+                        <span id="resCassetes" class="font-bold text-gray-700">0 / 0</span>
+                    </div>
+                    <div class="bg-white rounded border p-2 text-center">
+                        <span class="block text-[10px] text-gray-400 uppercase">Margens</span>
+                        <span id="resMargem" class="font-bold text-gray-700">livres</span>
+                        <span id="resMargemDet" class="block text-[10px] text-gray-500"></span>
+                    </div>
+                    <div class="bg-white rounded border p-2 text-center">
+                        <span class="block text-[10px] text-gray-400 uppercase">Estádio sugerido</span>
+                        <span id="resEstadio" class="font-bold text-purple-700">—</span>
+                    </div>
+                    <div class="bg-white rounded border p-2 text-center">
+                        <span class="block text-[10px] text-gray-400 uppercase">Acometimento</span>
+                        <span id="resLado" class="font-bold text-gray-700">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gradação complementar -->
+            <div class="bg-white rounded-lg border border-gray-200 p-3 space-y-2">
+                <h3 class="font-bold text-gray-600 text-xs uppercase border-b pb-1">Gradação complementar</h3>
+                <div>
+                    <label class="text-xs text-gray-500">% de componente cribriforme dentro do G4</label>
+                    <input type="number" min="0" max="100" step="1" id="cribriforme" placeholder="0"
+                        oninput="onExtra()" class="mt-1 w-full border rounded p-1 text-xs text-center focus:ring-1 focus:ring-blue-400">
+                    <p id="cribCalc" class="text-[10px] text-gray-400 mt-1"></p>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Peso da próstata (g) — opcional</label>
+                    <input type="number" min="0" step="0.1" id="pesoProstata" placeholder="—"
+                        oninput="onExtra()" class="mt-1 w-full border rounded p-1 text-xs text-center focus:ring-1 focus:ring-blue-400">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Carcinoma intraductal</label>
+                    <select id="intraductal" onchange="onExtra()" class="mt-1 w-full border rounded p-1 text-xs focus:ring-1 focus:ring-blue-400">
+                        <option>não detectado</option>
+                        <option>presente</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Invasões -->
+            <div class="bg-white rounded-lg border border-gray-200 p-3 space-y-2">
+                <h3 class="font-bold text-gray-600 text-xs uppercase border-b pb-1">Invasões e extensão</h3>
+                <div>
+                    <label class="text-xs text-gray-500">Invasão vascular sanguínea</label>
+                    <select id="vascS" onchange="onExtra()" class="mt-1 w-full border rounded p-1 text-xs focus:ring-1 focus:ring-blue-400">
+                        <option>não detectada</option><option>presente</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Invasão vascular linfática</label>
+                    <select id="vascL" onchange="onExtra()" class="mt-1 w-full border rounded p-1 text-xs focus:ring-1 focus:ring-blue-400">
+                        <option>não detectada</option><option>presente</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Invasão perineural</label>
+                    <select id="peri" onchange="onExtra()" class="mt-1 w-full border rounded p-1 text-xs focus:ring-1 focus:ring-blue-400">
+                        <option>presente</option><option>não detectada</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Colo vesical</label>
+                    <select id="colo" onchange="onExtra()" class="mt-1 w-full border rounded p-1 text-xs focus:ring-1 focus:ring-blue-400">
+                        <option>não avaliado</option><option>livre</option><option>comprometido</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">Vesículas seminais</label>
+                    <select id="vesicula" onchange="onExtra()" class="mt-1 w-full border rounded p-1 text-xs focus:ring-1 focus:ring-blue-400">
+                        <option>não identificadas</option>
+                        <option>livres</option>
+                        <option>comprometida à direita</option>
+                        <option>comprometida à esquerda</option>
+                        <option>comprometidas bilateralmente</option>
+                    </select>
+                    <p id="avisoVesicula" class="text-[10px] text-orange-600 mt-1"></p>
+                </div>
+                <label class="flex items-center gap-2 text-xs cursor-pointer">
+                    <input type="checkbox" id="chkT4" onchange="onExtra()">
+                    Invasão de estruturas adjacentes (reto, bexiga, esfíncter, parede pélvica)
+                </label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs text-gray-500">Linfonodos +</label>
+                        <input type="number" min="0" step="1" id="lnPos" placeholder="0" oninput="onExtra()"
+                            class="mt-1 w-full border rounded p-1 text-xs text-center focus:ring-1 focus:ring-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Linfonodos examinados</label>
+                        <input type="number" min="0" step="1" id="lnTot" placeholder="0" oninput="onExtra()"
+                            class="mt-1 w-full border rounded p-1 text-xs text-center focus:ring-1 focus:ring-blue-400">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tecido adjacente -->
+            <div class="bg-white rounded-lg border border-gray-200 p-3">
+                <h3 class="font-bold text-gray-600 text-xs uppercase border-b pb-1 mb-2">Tecido adjacente</h3>
+                <div class="space-y-1 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkPin" onchange="onExtra()"> PIN de alto grau</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkHnp" onchange="onExtra()" checked> Hiperplasia nodular</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkInf" onchange="onExtra()" checked> Inflamação crônica</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkAtr" onchange="onExtra()" checked> Atrofia acinar</label>
+                </div>
+            </div>
+
+            <!-- Resumo -->
+            <div class="bg-white rounded-lg border border-gray-200 p-3">
+                <h3 class="font-bold text-gray-600 text-xs uppercase mb-2">Resumo dos parâmetros</h3>
+                <textarea id="resumoTxt" rows="18" readonly
+                    class="w-full bg-gray-900 text-green-400 font-mono text-[10px] p-2 rounded leading-relaxed resize-y"></textarea>
+                <button id="btnCopiar" onclick="copiarResumo()"
+                    class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition text-xs">
+                    Copiar resumo
+                </button>
+                <p class="text-[10px] text-gray-400 mt-2">
+                    Este resumo não é um laudo: reúne os números e localizações já calculados para você redigir.
+                </p>
+            </div>
+
+        </div><!-- fim coluna direita -->
+    </div>
+</div>
+
+<datalist id="topografiasComuns">
+    <option value="Lobo direito — porção anterior"></option>
+    <option value="Lobo direito — porção posterior"></option>
+    <option value="Lobo esquerdo — porção anterior"></option>
+    <option value="Lobo esquerdo — porção posterior"></option>
+    <option value="Terço médio direito"></option>
+    <option value="Terço médio esquerdo"></option>
+    <option value="Ápice direito"></option>
+    <option value="Ápice esquerdo"></option>
+    <option value="Ápice"></option>
+    <option value="Base direita"></option>
+    <option value="Base esquerda"></option>
+    <option value="Base"></option>
+    <option value="Colo vesical"></option>
+    <option value="Vesícula seminal direita"></option>
+    <option value="Vesícula seminal esquerda"></option>
+    <option value="Linfonodos ilíacos/obturadores à direita"></option>
+    <option value="Linfonodos ilíacos/obturadores à esquerda"></option>
+    <option value="Margem apical"></option>
+    <option value="Margem basal"></option>
+</datalist>
+
+<script>
+// =================================================================
+// PALETA / CONSTANTES
+// =================================================================
+const PALETA = [
+    { row:'bg-emerald-50', head:'bg-emerald-200 text-emerald-900', chip:'bg-emerald-400' },
+    { row:'bg-amber-50',   head:'bg-amber-200 text-amber-900',     chip:'bg-amber-400'   },
+    { row:'bg-sky-50',     head:'bg-sky-200 text-sky-900',         chip:'bg-sky-400'     },
+    { row:'bg-violet-50',  head:'bg-violet-200 text-violet-900',   chip:'bg-violet-400'  },
+    { row:'bg-rose-50',    head:'bg-rose-200 text-rose-900',       chip:'bg-rose-400'    },
+    { row:'bg-teal-50',    head:'bg-teal-200 text-teal-900',       chip:'bg-teal-400'    },
+    { row:'bg-orange-50',  head:'bg-orange-200 text-orange-900',   chip:'bg-orange-400'  },
+    { row:'bg-lime-50',    head:'bg-lime-200 text-lime-900',       chip:'bg-lime-400'    },
+    { row:'bg-fuchsia-50', head:'bg-fuchsia-200 text-fuchsia-900', chip:'bg-fuchsia-400' },
+    { row:'bg-cyan-50',    head:'bg-cyan-200 text-cyan-900',       chip:'bg-cyan-400'    },
+];
+const CINZA = { row:'bg-gray-50', head:'bg-gray-200 text-gray-700', chip:'bg-gray-400' };
+
+const TIPOS = {
+    prostata: 'Próstata (entra no volume)',
+    vesicula: 'Vesícula seminal',
+    linfonodo: 'Linfonodo',
+    outro: 'Outro (não entra no volume)'
+};
+
+const LADOS = { '': '—', D: 'Direito', E: 'Esquerdo', B: 'Bilateral' };
+
+const LS_ESTADO  = 'guilisProstataCalc.estado.v1';
+const LS_MODELOS = 'guilisProstataCalc.modelos.v1';
+
+const MODELOS_PADRAO = {
+    'HUOL — 34 cassetes (padrão)': {
+        total: 34,
+        grupos: [
+            { nome:'Porção anterior — lobo direito',   faixa:'1-8',   tipo:'prostata', lado:'D' },
+            { nome:'Porção posterior — lobo direito',  faixa:'9-16',  tipo:'prostata', lado:'D' },
+            { nome:'Porção anterior — lobo esquerdo',  faixa:'17-24', tipo:'prostata', lado:'E' },
+            { nome:'Porção posterior — lobo esquerdo', faixa:'25-32', tipo:'prostata', lado:'E' },
+            { nome:'Ápice',                            faixa:'33',    tipo:'prostata', lado:'B' },
+            { nome:'Base',                             faixa:'34',    tipo:'prostata', lado:'B' },
+        ]
+    },
+    'Genérico — 4 quadrantes + ápice e base': {
+        total: 20,
+        grupos: [
+            { nome:'Lobo direito — porção anterior',   faixa:'1-4',   tipo:'prostata', lado:'D' },
+            { nome:'Lobo direito — porção posterior',  faixa:'5-8',   tipo:'prostata', lado:'D' },
+            { nome:'Lobo esquerdo — porção anterior',  faixa:'9-12',  tipo:'prostata', lado:'E' },
+            { nome:'Lobo esquerdo — porção posterior', faixa:'13-16', tipo:'prostata', lado:'E' },
+            { nome:'Ápice',                            faixa:'17-18', tipo:'prostata', lado:'B' },
+            { nome:'Base',                             faixa:'19-20', tipo:'prostata', lado:'B' },
+        ]
+    }
+};
+
+// =================================================================
+// ESTADO
+// =================================================================
+let estado = {
+    total: 34,
+    modo: 'tumor',            // 'tumor' = G4/G5 em % do tumor | 'cassete' = % da área do cassete
+    grupos: [],               // { nome, faixa, tipo, lado }
+    dados: {},                // n -> { t, g4, g5, mc, mm, gm, epe }
+    extras: {},               // campos da coluna direita
+    avancado: false,
+    mapaAberto: true
+};
+
+let MAPA = null;              // resultado de construirMapa()
+let ORDEM_INPUTS = [];        // ordem de navegação por teclado
+
+// =================================================================
+// UTILITÁRIOS
+// =================================================================
+function fmt(x, casas = 1) {
+    if (!isFinite(x)) return '—';
+    return x.toFixed(casas).replace('.', ',');
+}
+function num(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function parseFaixa(str, total) {
+    const set = new Set();
+    let invalido = false;
+    String(str || '').split(/[,;]/).forEach(parte => {
+        const p = parte.trim();
+        if (!p) return;
+        const m = p.match(/^(\d+)\s*(?:[-–aà]\s*(\d+))?$/i);
+        if (!m) { invalido = true; return; }
+        let a = parseInt(m[1], 10);
+        let b = m[2] ? parseInt(m[2], 10) : a;
+        if (b < a) [a, b] = [b, a];
+        for (let i = a; i <= b; i++) {
+            if (i >= 1 && i <= total) set.add(i);
+            else invalido = true;
+        }
+    });
+    return { cassetes: [...set].sort((x, y) => x - y), invalido };
+}
+
+function faixaResumida(lista) {
+    if (!lista.length) return '—';
+    const partes = [];
+    let ini = lista[0], ant = lista[0];
+    for (let i = 1; i <= lista.length; i++) {
+        const atual = lista[i];
+        if (atual !== ant + 1) {
+            partes.push(ini === ant ? `${ini}` : `${ini}-${ant}`);
+            ini = atual;
+        }
+        ant = atual;
+    }
+    return partes.join(', ');
+}
+
+function listaTexto(arr) {
+    if (!arr.length) return '';
+    if (arr.length === 1) return arr[0];
+    return arr.slice(0, -1).join(', ') + ' e ' + arr[arr.length - 1];
+}
+
+function gradeGroup(p, s) {
+    const t = p + s;
+    if (t <= 6)             return 1;
+    if (t === 7 && p === 3) return 2;
+    if (t === 7 && p === 4) return 3;
+    if (t === 8)            return 4;
+    return 5;
+}
+
+/**
+ * Gleason de peça cirúrgica a partir das porcentagens (do tumor) de cada padrão.
+ * Primário  = padrão mais prevalente.
+ * Secundário= segundo mais prevalente.
+ * Terciário = terceiro padrão presente (destacado quando é de grau maior).
+ */
+function calcGleason(p3, p4, p5) {
+    const comp = [{ g:3, p:p3 }, { g:4, p:p4 }, { g:5, p:p5 }].filter(x => x.p > 0.049);
+    if (!comp.length) return null;
+    comp.sort((a, b) => b.p - a.p || b.g - a.g);
+    const prim = comp[0];
+    const sec  = comp[1] || comp[0];
+    const terc = comp[2] || null;
+    const maiorTerciario = terc && terc.g > Math.max(prim.g, sec.g) ? terc : null;
+    return {
+        prim: prim.g, sec: sec.g, score: prim.g + sec.g,
+        gg: gradeGroup(prim.g, sec.g),
+        terciario: maiorTerciario,
+        texto: `${prim.g}+${sec.g}=${prim.g + sec.g}`
+    };
+}
+
+// =================================================================
+// PERSISTÊNCIA
+// =================================================================
+function salvar() {
+    try { localStorage.setItem(LS_ESTADO, JSON.stringify(estado)); } catch (e) {}
+}
+function restaurar() {
+    try {
+        const raw = localStorage.getItem(LS_ESTADO);
+        if (raw) {
+            const s = JSON.parse(raw);
+            estado = Object.assign(estado, s);
+            estado.dados  = s.dados  || {};
+            estado.extras = s.extras || {};
+        }
+    } catch (e) {}
+    if (!estado.grupos || !estado.grupos.length) {
+        const p = MODELOS_PADRAO['HUOL — 34 cassetes (padrão)'];
+        estado.total = p.total;
+        estado.grupos = JSON.parse(JSON.stringify(p.grupos));
+    }
+}
+function getModelos() {
+    let salvos = {};
+    try { salvos = JSON.parse(localStorage.getItem(LS_MODELOS) || '{}'); } catch (e) {}
+    return Object.assign({}, MODELOS_PADRAO, salvos);
+}
+function renderModelos() {
+    const sel = document.getElementById('selModelos');
+    const modelos = getModelos();
+    sel.innerHTML = Object.keys(modelos).map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join('');
+}
+function carregarModelo() {
+    const nome = document.getElementById('selModelos').value;
+    const m = getModelos()[nome];
+    if (!m) return;
+    estado.total = m.total;
+    estado.grupos = JSON.parse(JSON.stringify(m.grupos));
+    renderTudo();
+}
+function salvarModelo() {
+    const nome = prompt('Nome do modelo de mapeamento:', 'Meu modelo');
+    if (!nome) return;
+    let salvos = {};
+    try { salvos = JSON.parse(localStorage.getItem(LS_MODELOS) || '{}'); } catch (e) {}
+    salvos[nome] = { total: estado.total, grupos: JSON.parse(JSON.stringify(estado.grupos)) };
+    localStorage.setItem(LS_MODELOS, JSON.stringify(salvos));
+    renderModelos();
+    document.getElementById('selModelos').value = nome;
+}
+function excluirModelo() {
+    const nome = document.getElementById('selModelos').value;
+    if (MODELOS_PADRAO[nome]) { alert('Os modelos padrão não podem ser excluídos.'); return; }
+    if (!confirm(`Excluir o modelo "${nome}"?`)) return;
+    let salvos = {};
+    try { salvos = JSON.parse(localStorage.getItem(LS_MODELOS) || '{}'); } catch (e) {}
+    delete salvos[nome];
+    localStorage.setItem(LS_MODELOS, JSON.stringify(salvos));
+    renderModelos();
+}
+
+// =================================================================
+// MAPEAMENTO
+// =================================================================
+function construirMapa() {
+    const total = estado.total;
+    const atrib = {};
+    const conflitos = new Set();
+    const invalidos = [];
+
+    const grupos = estado.grupos.map((g, i) => {
+        const r = parseFaixa(g.faixa, total);
+        if (r.invalido) invalidos.push(g.nome || `Topografia ${i + 1}`);
+        return {
+            idx: i,
+            nome: g.nome || `Topografia ${i + 1}`,
+            tipo: g.tipo || 'prostata',
+            lado: g.lado || '',
+            cassetes: r.cassetes,
+            cor: PALETA[i % PALETA.length]
+        };
+    });
+
+    grupos.forEach(g => {
+        g.cassetes = g.cassetes.filter(n => {
+            if (atrib[n] !== undefined) { conflitos.add(n); return false; }
+            atrib[n] = g.idx;
+            return true;
+        });
+    });
+
+    const naoMapeados = [];
+    for (let n = 1; n <= total; n++) if (atrib[n] === undefined) naoMapeados.push(n);
+
+    const visiveis = grupos.filter(g => g.cassetes.length);
+    if (naoMapeados.length) {
+        visiveis.push({
+            idx: -1, nome: 'Sem topografia definida', tipo: 'prostata', lado: '',
+            cassetes: naoMapeados, cor: CINZA
+        });
+    }
+
+    return { total, grupos, visiveis, atrib, conflitos: [...conflitos], naoMapeados, invalidos };
+}
+
+function renderGrupos() {
+    const tb = document.getElementById('tabelaGrupos');
+    tb.innerHTML = estado.grupos.map((g, i) => {
+        const cor = PALETA[i % PALETA.length];
+        return `
+        <tr class="border-b last:border-0">
+            <td class="px-2 py-1"><span class="inline-block w-3 h-3 rounded-full ${cor.chip}"></span></td>
+            <td class="px-2 py-1">
+                <input type="text" list="topografiasComuns" value="${esc(g.nome)}"
+                    oninput="setGrupo(${i},'nome',this.value)" placeholder="Ex.: Lobo direito — porção anterior"
+                    class="w-full border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-400">
+            </td>
+            <td class="px-2 py-1">
+                <input type="text" value="${esc(g.faixa)}"
+                    oninput="setGrupo(${i},'faixa',this.value)" placeholder="1-8"
+                    class="w-full border rounded px-2 py-1 text-xs font-mono focus:ring-1 focus:ring-blue-400">
+            </td>
+            <td class="px-2 py-1">
+                <select onchange="setGrupo(${i},'tipo',this.value)"
+                    class="w-full border rounded px-1 py-1 text-xs focus:ring-1 focus:ring-blue-400">
+                    ${Object.entries(TIPOS).map(([k, v]) =>
+                        `<option value="${k}" ${(g.tipo || 'prostata') === k ? 'selected' : ''}>${v}</option>`).join('')}
+                </select>
+            </td>
+            <td class="px-2 py-1">
+                <select onchange="setGrupo(${i},'lado',this.value)"
+                    class="w-full border rounded px-1 py-1 text-xs focus:ring-1 focus:ring-blue-400">
+                    ${Object.entries(LADOS).map(([k, v]) =>
+                        `<option value="${k}" ${(g.lado || '') === k ? 'selected' : ''}>${v}</option>`).join('')}
+                </select>
+            </td>
+            <td class="px-2 py-1 text-center whitespace-nowrap">
+                <button onclick="moverGrupo(${i},-1)" title="Subir" class="text-gray-400 hover:text-gray-700 px-1">▲</button>
+                <button onclick="moverGrupo(${i},1)" title="Descer" class="text-gray-400 hover:text-gray-700 px-1">▼</button>
+                <button onclick="removerGrupo(${i})" title="Remover" class="text-red-300 hover:text-red-600 px-1">✕</button>
+            </td>
+        </tr>`;
+    }).join('') || `<tr><td colspan="6" class="px-3 py-3 text-center text-gray-400 text-xs">Nenhuma topografia definida — clique em “+ Adicionar topografia”.</td></tr>`;
+}
+
+function renderRegua() {
+    const el = document.getElementById('reguaCassetes');
+    let html = '';
+    for (let n = 1; n <= estado.total; n++) {
+        const gi = MAPA.atrib[n];
+        const g = gi !== undefined ? MAPA.grupos[gi] : null;
+        const cor = g ? g.cor.chip : 'bg-gray-200';
+        const txt = g ? 'text-white' : 'text-gray-400';
+        const titulo = g ? `${g.nome} (${TIPOS[g.tipo]})` : 'Não mapeado';
+        html += `<span title="${esc(titulo)}" class="${cor} ${txt} text-[10px] font-bold rounded w-6 h-6 flex items-center justify-center">${n}</span>`;
+    }
+    el.innerHTML = html;
+}
+
+function renderAvisos() {
+    const box = document.getElementById('avisosMapa');
+    const avisos = [];
+    if (MAPA.conflitos.length)
+        avisos.push(['red', `Cassetes em mais de uma topografia (${faixaResumida(MAPA.conflitos)}) — foram atribuídos à primeira topografia da lista.`]);
+    if (MAPA.naoMapeados.length)
+        avisos.push(['amber', `Cassetes sem topografia (${faixaResumida(MAPA.naoMapeados)}) — entram no cálculo do volume como tecido prostático, mas sem localização.`]);
+    if (MAPA.invalidos.length)
+        avisos.push(['amber', `Faixa inválida ou fora do total em: ${MAPA.invalidos.join(', ')}.`]);
+    const semProstata = MAPA.visiveis.filter(g => g.tipo === 'prostata').reduce((a, g) => a + g.cassetes.length, 0);
+    if (!semProstata)
+        avisos.push(['red', 'Nenhum cassete marcado como “Próstata” — o volume tumoral não pode ser calculado.']);
+
+    box.innerHTML = avisos.map(([c, t]) =>
+        `<div class="text-xs rounded px-2 py-1 border ${c === 'red' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-800'}">${esc(t)}</div>`
+    ).join('');
+}
+
+function setTotal(v) {
+    const n = Math.max(1, Math.min(200, parseInt(v, 10) || 1));
+    estado.total = n;
+    document.getElementById('inTotal').value = n;
+    renderTudo();
+}
+function setModo(v) { estado.modo = v; renderTudo(); }
+function setGrupo(i, campo, valor) {
+    estado.grupos[i][campo] = valor;
+    // 'nome' e 'faixa' vêm de <input type=text>: não re-renderizar a tabela de
+    // grupos, senão o campo perde o foco a cada tecla digitada.
+    renderTudo(campo !== 'nome' && campo !== 'faixa');
+}
+function addGrupo() {
+    const usados = estado.grupos.flatMap(g => parseFaixa(g.faixa, estado.total).cassetes);
+    const prox = usados.length ? Math.max(...usados) + 1 : 1;
+    estado.grupos.push({
+        nome: '', tipo: 'prostata', lado: '',
+        faixa: prox <= estado.total ? `${prox}-${Math.min(estado.total, prox)}` : ''
+    });
+    renderTudo();
+}
+function removerGrupo(i) { estado.grupos.splice(i, 1); renderTudo(); }
+function moverGrupo(i, d) {
+    const j = i + d;
+    if (j < 0 || j >= estado.grupos.length) return;
+    [estado.grupos[i], estado.grupos[j]] = [estado.grupos[j], estado.grupos[i]];
+    renderTudo();
+}
+function limparMapeamento() {
+    if (!confirm('Remover todas as topografias do mapeamento?')) return;
+    estado.grupos = [];
+    renderTudo();
+}
+function dividirIgualmente() {
+    const q = parseInt(prompt(`Dividir os ${estado.total} cassetes em quantas topografias?`, '4'), 10);
+    if (!q || q < 1) return;
+    const base = Math.floor(estado.total / q);
+    const resto = estado.total % q;
+    const novos = [];
+    let ini = 1;
+    for (let i = 0; i < q; i++) {
+        const tam = base + (i < resto ? 1 : 0);
+        if (tam <= 0) continue;
+        const fim = ini + tam - 1;
+        novos.push({ nome: '', faixa: ini === fim ? `${ini}` : `${ini}-${fim}`, tipo: 'prostata', lado: '' });
+        ini = fim + 1;
+    }
+    estado.grupos = novos;
+    renderTudo();
+}
+function toggleMapa() {
+    estado.mapaAberto = !estado.mapaAberto;
+    document.getElementById('painelMapa').style.display = estado.mapaAberto ? '' : 'none';
+    document.getElementById('btnToggleMapa').textContent = estado.mapaAberto ? 'Recolher' : 'Expandir';
+    salvar();
+}
+
+// =================================================================
+// TABELA DE CASSETES
+// =================================================================
+function dado(n) {
+    if (!estado.dados[n]) estado.dados[n] = {};
+    return estado.dados[n];
+}
+function setDado(n, campo, valor) {
+    dado(n)[campo] = valor;
+    salvar();
+    calcular();
+}
+
+function renderTabela() {
+    const tb = document.getElementById('tabelaCassetes');
+    ORDEM_INPUTS = [];
+    let html = '';
+
+    MAPA.visiveis.forEach(g => {
+        const badge = g.tipo !== 'prostata'
+            ? `<span class="ml-2 text-[10px] font-normal bg-white/70 rounded px-1 py-0.5">${TIPOS[g.tipo]}</span>` : '';
+        html += `<tr><td colspan="8" class="px-3 py-1 text-xs font-semibold ${g.cor.head}">
+            ${esc(g.nome)} <span class="font-normal opacity-70">· cassetes ${faixaResumida(g.cassetes)}</span>${badge}
+            <span id="ghead-${g.idx}" class="float-right font-normal opacity-80"></span>
+        </td></tr>`;
+
+        g.cassetes.forEach(n => {
+            const d = dado(n);
+            ORDEM_INPUTS.push(n);
+            html += `
+            <tr class="${g.cor.row} border-b border-gray-100">
+                <td class="px-2 py-1 text-center font-bold text-gray-500 select-none">${n}</td>
+                <td class="px-1 py-1">
+                    <input type="number" min="0" max="100" step="1" placeholder="—" value="${d.t ?? ''}"
+                        id="t-${n}" oninput="setDado(${n},'t',this.value)" onkeydown="nav(event,${n},'t')"
+                        class="w-full border border-gray-200 rounded px-1 py-0.5 text-center text-xs focus:ring-1 focus:ring-blue-400 bg-white">
+                </td>
+                <td class="px-1 py-1">
+                    <input type="number" min="0" max="100" step="1" placeholder="—" value="${d.g4 ?? ''}"
+                        id="g4-${n}" oninput="setDado(${n},'g4',this.value)" onkeydown="nav(event,${n},'g4')"
+                        class="w-full border border-gray-200 rounded px-1 py-0.5 text-center text-xs focus:ring-1 focus:ring-blue-400 bg-white">
+                </td>
+                <td class="px-1 py-1">
+                    <input type="number" min="0" max="100" step="1" placeholder="—" value="${d.g5 ?? ''}"
+                        id="g5-${n}" oninput="setDado(${n},'g5',this.value)" onkeydown="nav(event,${n},'g5')"
+                        class="w-full border border-gray-200 rounded px-1 py-0.5 text-center text-xs focus:ring-1 focus:ring-blue-400 bg-white">
+                </td>
+                <td class="px-1 py-1">
+                    <div class="flex items-center gap-1">
+                        <label class="flex items-center gap-1 text-[10px] text-gray-500 cursor-pointer">
+                            <input type="checkbox" id="mc-${n}" ${d.mc ? 'checked' : ''}
+                                onchange="setDado(${n},'mc',this.checked)"> MC
+                        </label>
+                        <input type="number" min="0" step="0.1" placeholder="mm" value="${d.mm ?? ''}"
+                            id="mm-${n}" oninput="setDado(${n},'mm',this.value)"
+                            class="w-14 border border-gray-200 rounded px-1 py-0.5 text-center text-xs focus:ring-1 focus:ring-blue-400 bg-white">
+                    </div>
+                </td>
+                <td class="px-1 py-1 text-center col-adv">
+                    <input type="checkbox" id="epe-${n}" ${d.epe ? 'checked' : ''} onchange="setDado(${n},'epe',this.checked)">
+                </td>
+                <td class="px-1 py-1 col-adv">
+                    <select id="gm-${n}" onchange="setDado(${n},'gm',this.value)"
+                        class="w-full border border-gray-200 rounded px-1 py-0.5 text-xs bg-white focus:ring-1 focus:ring-blue-400">
+                        <option value="" ${!d.gm ? 'selected' : ''}>—</option>
+                        <option value="3" ${d.gm === '3' ? 'selected' : ''}>3</option>
+                        <option value="4" ${d.gm === '4' ? 'selected' : ''}>4</option>
+                        <option value="5" ${d.gm === '5' ? 'selected' : ''}>5</option>
+                    </select>
+                </td>
+                <td class="px-1 py-1 text-center w-8 text-base" id="ok-${n}"></td>
+            </tr>`;
+        });
+    });
+
+    tb.innerHTML = html || `<tr><td colspan="8" class="px-3 py-4 text-center text-gray-400 text-xs">Defina o mapeamento acima para liberar a digitação.</td></tr>`;
+}
+
+function nav(e, n, campo) {
+    if (e.key !== 'Enter' && e.key !== 'Tab') return;
+    e.preventDefault();
+    if (campo === 't')  { document.getElementById(`g4-${n}`)?.focus(); return; }
+    if (campo === 'g4') { document.getElementById(`g5-${n}`)?.focus(); return; }
+    const i = ORDEM_INPUTS.indexOf(n);
+    const prox = ORDEM_INPUTS[(i + 1) % ORDEM_INPUTS.length];
+    document.getElementById(`t-${prox}`)?.focus();
+}
+
+function toggleAvancado() {
+    estado.avancado = document.getElementById('chkAvancado').checked;
+    document.getElementById('tblDados').classList.toggle('hide-adv', !estado.avancado);
+    salvar();
+}
+
+function limparDados() {
+    if (!confirm('Apagar os dados digitados (o mapeamento é mantido)?')) return;
+    estado.dados = {};
+    renderTabela();
+    calcular();
+    salvar();
+}
+
+// =================================================================
+// LEITURA NORMALIZADA DE UM CASSETE
+// tumor  = % da área do cassete ocupada por tumor
+// f4/f5  = % DO TUMOR daquele cassete que é padrão 4 / 5
+// =================================================================
+function lerCassete(n) {
+    const d = estado.dados[n] || {};
+    const t  = Math.max(0, Math.min(100, num(d.t)));
+    const v4 = Math.max(0, num(d.g4));
+    const v5 = Math.max(0, num(d.g5));
+    let f4, f5, valido;
+
+    if (estado.modo === 'cassete') {
+        // valores digitados são % da área do cassete → converte para % do tumor
+        f4 = t > 0 ? (v4 / t) * 100 : 0;
+        f5 = t > 0 ? (v5 / t) * 100 : 0;
+        valido = (v4 + v5) <= t + 0.01;
+    } else {
+        f4 = v4; f5 = v5;
+        valido = (v4 + v5) <= 100.01;
+    }
+    if (f4 + f5 > 100) { const s = f4 + f5; f4 = f4 * 100 / s; f5 = f5 * 100 / s; }
+    return { t, f4, f5, valido, d };
+}
+
+// =================================================================
+// CÁLCULO
+// =================================================================
+function calcular() {
+    const gruposCalc = MAPA.visiveis.map(g => {
+        const st = { g, nCass: g.cassetes.length, nAcom: 0, somaT: 0, somaG4: 0, somaG5: 0,
+                     margens: [], epes: [], gradMargem: new Set() };
+        g.cassetes.forEach(n => {
+            const c = lerCassete(n);
+            const ok = document.getElementById(`ok-${n}`);
+            if (ok) {
+                if (c.t > 0) {
+                    ok.textContent = c.valido ? '✓' : '⚠';
+                    ok.className = c.valido ? 'text-green-500 font-bold' : 'text-red-500 font-bold';
+                    ok.title = c.valido ? '' : (estado.modo === 'cassete'
+                        ? 'G4 + G5 não pode passar do % de tumor do cassete'
+                        : 'G4 + G5 não pode passar de 100% do tumor');
+                } else { ok.textContent = ''; ok.title = ''; }
+            }
+            if (c.t > 0) {
+                st.nAcom++;
+                st.somaT  += c.t;
+                st.somaG4 += c.f4 * c.t;
+                st.somaG5 += c.f5 * c.t;
+            }
+            if (c.d.mc) { st.margens.push({ n, mm: num(c.d.mm) }); if (c.d.gm) st.gradMargem.add(c.d.gm); }
+            if (c.d.epe) st.epes.push(n);
+        });
+        st.pctRegiao = st.nCass ? st.somaT / st.nCass : 0;
+        st.g4 = st.somaT > 0 ? st.somaG4 / st.somaT : 0;
+        st.g5 = st.somaT > 0 ? st.somaG5 / st.somaT : 0;
+        st.g3 = 100 - st.g4 - st.g5;
+        st.gleason = st.somaT > 0 ? calcGleason(st.g3, st.g4, st.g5) : null;
+        return st;
+    });
+
+    const prost = gruposCalc.filter(s => s.g.tipo === 'prostata');
+    const nProst = prost.reduce((a, s) => a + s.nCass, 0);
+    const nAcomProst = prost.reduce((a, s) => a + s.nAcom, 0);
+    const somaT = prost.reduce((a, s) => a + s.somaT, 0);
+    const somaG4 = prost.reduce((a, s) => a + s.somaG4, 0);
+    const somaG5 = prost.reduce((a, s) => a + s.somaG5, 0);
+
+    const vol = nProst > 0 ? somaT / nProst : 0;
+    const mG4 = somaT > 0 ? somaG4 / somaT : 0;
+    const mG5 = somaT > 0 ? somaG5 / somaT : 0;
+    const mG3 = 100 - mG4 - mG5;
+    const gl = somaT > 0 ? calcGleason(mG3, mG4, mG5) : null;
+
+    // ---- painel de resultados ----
+    document.getElementById('resVol').textContent = fmt(vol) + '%';
+    document.getElementById('resMG3').textContent = fmt(somaT > 0 ? mG3 : 0) + '%';
+    document.getElementById('resMG4').textContent = fmt(mG4) + '%';
+    document.getElementById('resMG5').textContent = fmt(mG5) + '%';
+    document.getElementById('resCassetes').textContent = `${nAcomProst} / ${nProst}`;
+
+    const peso = num(document.getElementById('pesoProstata').value);
+    document.getElementById('resVolG').textContent =
+        peso > 0 && vol > 0 ? `≈ ${fmt(peso * vol / 100)} g de tumor (próstata ${fmt(peso)} g)` : '';
+
+    document.getElementById('resGleason').textContent = gl ? gl.texto : '—';
+    document.getElementById('resGrupo').textContent   = gl ? `Grupo ${gl.gg} (ISUP/OMS)` : '';
+    document.getElementById('resTerciario').textContent =
+        gl && gl.terciario ? `padrão terciário ${gl.terciario.g} (${fmt(gl.terciario.p)}% do tumor)` : '';
+
+    const crib = num(document.getElementById('cribriforme').value);
+    document.getElementById('cribCalc').textContent =
+        crib > 0 && mG4 > 0 ? `≈ ${fmt(crib * mG4 / 100)}% do tumor total é cribriforme` : '';
+
+    // ---- cabeçalhos de grupo ----
+    gruposCalc.forEach(s => {
+        const el = document.getElementById(`ghead-${s.g.idx}`);
+        if (el) el.textContent = s.nAcom ? `${s.nAcom}/${s.nCass} c/ tumor · ${fmt(s.pctRegiao)}% da região` : '';
+    });
+
+    // ---- margens ----
+    const margens = [];
+    gruposCalc.forEach(s => s.margens.forEach(m => margens.push({ ...m, grupo: s.g.nome })));
+    const totalMm = margens.reduce((a, m) => a + m.mm, 0);
+    const maiorMm = margens.reduce((a, m) => Math.max(a, m.mm), 0);
+    const gradMargem = [...new Set(gruposCalc.flatMap(s => [...s.gradMargem]))].sort();
+
+    const elM = document.getElementById('resMargem');
+    const elMD = document.getElementById('resMargemDet');
+    if (margens.length) {
+        elM.textContent = 'comprometida (R1)';
+        elM.className = 'font-bold text-red-600';
+        const classe = maiorMm > 0 ? (maiorMm <= 3 ? ' · focal' : ' · extensa') : '';
+        elMD.textContent = `${margens.length} foco(s)` +
+            (totalMm > 0 ? ` · total ${fmt(totalMm)} mm · maior ${fmt(maiorMm)} mm${classe}` : '') +
+            (gradMargem.length ? ` · Gleason ${gradMargem.join('/')}` : '');
+    } else {
+        elM.textContent = 'livres';
+        elM.className = 'font-bold text-green-600';
+        elMD.textContent = '';
+    }
+
+    // ---- lateralidade ----
+    const lados = new Set();
+    gruposCalc.forEach(s => { if (s.g.tipo === 'prostata' && s.nAcom) { if (s.g.lado) lados.add(s.g.lado); } });
+    let lateralidade = '—';
+    if (nAcomProst) {
+        if (lados.has('B') || (lados.has('D') && lados.has('E'))) lateralidade = 'bilateral';
+        else if (lados.has('D')) lateralidade = 'unilateral à direita';
+        else if (lados.has('E')) lateralidade = 'unilateral à esquerda';
+        else lateralidade = 'lateralidade não definida no mapeamento';
+    }
+    document.getElementById('resLado').textContent = lateralidade;
+
+    // ---- vesícula seminal / linfonodos por cassete ----
+    const vesGrupos = gruposCalc.filter(s => s.g.tipo === 'vesicula' && s.nAcom);
+    const lnGrupos  = gruposCalc.filter(s => s.g.tipo === 'linfonodo' && s.nAcom);
+    const avisoVes = document.getElementById('avisoVesicula');
+    if (vesGrupos.length) {
+        avisoVes.textContent = `Há tumor nos cassetes de vesícula seminal: ${vesGrupos.map(s => s.g.nome).join(', ')} → pT3b.`;
+    } else { avisoVes.textContent = ''; }
+
+    // ---- EPE ----
+    const epeGrupos = gruposCalc.filter(s => s.epes.length);
+
+    // ---- estadiamento ----
+    const vesSel = document.getElementById('vesicula').value;
+    const vesComprometida = vesGrupos.length > 0 || vesSel.startsWith('comprometida');
+    const coloComprometido = document.getElementById('colo').value === 'comprometido';
+    const t4 = document.getElementById('chkT4').checked;
+    let pT = '—';
+    if (nAcomProst || vesComprometida || t4) {
+        if (t4) pT = 'pT4';
+        else if (vesComprometida) pT = 'pT3b';
+        else if (epeGrupos.length || coloComprometido) pT = 'pT3a';
+        else pT = 'pT2';
+    }
+    const lnPos = num(document.getElementById('lnPos').value);
+    const lnTot = num(document.getElementById('lnTot').value);
+    const lnPorCassete = lnGrupos.length;
+    const pN = (lnPos > 0 || lnPorCassete) ? 'pN1' : (lnTot > 0 ? 'pN0' : 'pNX');
+    document.getElementById('resEstadio').textContent =
+        `${pT} ${pN}${margens.length ? ' · R1' : (nAcomProst ? ' · R0' : '')}`;
+
+    renderTopografias(gruposCalc, nProst);
+    gerarResumo({ gruposCalc, prost, nProst, nAcomProst, vol, mG3, mG4, mG5, gl, crib, peso,
+                  margens, totalMm, maiorMm, gradMargem, lateralidade, epeGrupos, vesGrupos,
+                  vesComprometida, vesSel, pT, pN, lnPos, lnTot, lnGrupos });
+}
+
+function renderTopografias(gruposCalc, nProst) {
+    const tb = document.getElementById('tabelaTopografias');
+    const linhas = gruposCalc.map(s => {
+        const temTumor = s.nAcom > 0;
+        const pctOrgao = (s.g.tipo === 'prostata' && nProst) ? s.somaT / nProst : null;
+        const mm = s.margens.reduce((a, m) => a + m.mm, 0);
+        return `
+        <tr class="border-b last:border-0 ${temTumor ? '' : 'text-gray-300'}">
+            <td class="px-2 py-1">
+                <span class="inline-block w-2 h-2 rounded-full ${s.g.cor.chip} mr-1"></span>${esc(s.g.nome)}
+                ${s.g.tipo !== 'prostata' ? `<span class="text-[10px] text-gray-400">(${TIPOS[s.g.tipo]})</span>` : ''}
+            </td>
+            <td class="px-2 py-1 text-center">${s.nAcom}/${s.nCass}</td>
+            <td class="px-2 py-1 text-center">${temTumor ? fmt(s.pctRegiao) + '%' : '—'}</td>
+            <td class="px-2 py-1 text-center">${temTumor && pctOrgao !== null ? fmt(pctOrgao) + '%' : '—'}</td>
+            <td class="px-2 py-1 text-center font-semibold">${s.gleason ? s.gleason.texto : '—'}</td>
+            <td class="px-2 py-1 text-center">${temTumor ? fmt(s.g4) + '%' : '—'}</td>
+            <td class="px-2 py-1 text-center">${temTumor ? fmt(s.g5) + '%' : '—'}</td>
+            <td class="px-2 py-1 text-center ${s.margens.length ? 'text-red-600 font-semibold' : ''}">
+                ${s.margens.length ? `+ (${s.margens.length}${mm > 0 ? ` · ${fmt(mm)} mm` : ''})` : '—'}
+            </td>
+            <td class="px-2 py-1 text-center ${s.epes.length ? 'text-red-600 font-semibold' : ''}">
+                ${s.epes.length ? '+' : '—'}
+            </td>
+        </tr>`;
+    }).join('');
+    tb.innerHTML = linhas || `<tr><td colspan="9" class="px-3 py-3 text-center text-gray-400 text-xs">Sem topografias mapeadas.</td></tr>`;
+}
+
+// =================================================================
+// RESUMO
+// =================================================================
+function gerarResumo(r) {
+    if (!r.nAcomProst && !r.vesGrupos.length && !r.margens.length) {
+        document.getElementById('resumoTxt').value = '';
+        return;
+    }
+    const L = [];
+    L.push('RESUMO — PRODUTO DE PROSTATECTOMIA RADICAL');
+    L.push(`Mapeamento: ${estado.total} cassetes (${r.nProst} prostáticos) em ${MAPA.visiveis.length} topografia(s)`);
+    L.push(`G4/G5 digitados como ${estado.modo === 'tumor' ? '% do tumor de cada cassete' : '% da área de cada cassete'}`);
+    L.push('');
+
+    L.push('VOLUME');
+    L.push(`. Cassetes com tumor: ${r.nAcomProst} de ${r.nProst}`);
+    L.push(`. Volume da neoplasia: ${fmt(r.vol)}% do órgão`);
+    if (r.peso > 0) L.push(`. Estimativa: ${fmt(r.peso * r.vol / 100)} g de tumor (próstata de ${fmt(r.peso)} g)`);
+    L.push('');
+
+    if (r.gl) {
+        L.push('GRADAÇÃO (médias ponderadas pelo volume tumoral de cada cassete)');
+        L.push(`. Gleason global: ${r.gl.texto} — grupo ${r.gl.gg} (ISUP/OMS)`);
+        L.push(`. Padrão 3: ${fmt(r.mG3)}% | padrão 4: ${fmt(r.mG4)}% | padrão 5: ${fmt(r.mG5)}% do tumor`);
+        if (r.gl.terciario) L.push(`. Padrão terciário ${r.gl.terciario.g} (${fmt(r.gl.terciario.p)}% do tumor)`);
+        if (r.crib > 0) L.push(`. Componente cribriforme: ${fmt(r.crib, 0)}% do padrão 4 (≈ ${fmt(r.crib * r.mG4 / 100)}% do tumor)`);
+        else L.push('. Componente cribriforme: não identificado');
+        L.push(`. Carcinoma intraductal: ${document.getElementById('intraductal').value}`);
+        L.push('');
+    }
+
+    L.push('LOCALIZAÇÃO');
+    const comTumor = r.gruposCalc.filter(s => s.nAcom);
+    if (comTumor.length) {
+        comTumor.forEach(s => {
+            const partes = [`${s.nAcom}/${s.nCass} cassetes`, `${fmt(s.pctRegiao)}% da região`];
+            if (s.g.tipo === 'prostata' && r.nProst) partes.push(`${fmt(s.somaT / r.nProst)}% do órgão`);
+            if (s.gleason) partes.push(`Gleason ${s.gleason.texto}`);
+            if (s.g4 > 0) partes.push(`G4 ${fmt(s.g4)}%`);
+            if (s.g5 > 0) partes.push(`G5 ${fmt(s.g5)}%`);
+            L.push(`. ${s.g.nome}: ${partes.join(' · ')}`);
+        });
+        L.push(`. Acometimento: ${r.lateralidade}`);
+        L.push(`. Texto pronto: ${listaTexto(comTumor.filter(s => s.g.tipo === 'prostata').map(s => s.g.nome.toLowerCase()))}`);
+    } else {
+        L.push('. Sem tumor identificado nos cassetes preenchidos');
+    }
+    L.push('');
+
+    L.push('MARGENS CIRÚRGICAS');
+    if (r.margens.length) {
+        const porGrupo = {};
+        r.margens.forEach(m => {
+            porGrupo[m.grupo] = porGrupo[m.grupo] || { n: 0, mm: 0, cassetes: [] };
+            porGrupo[m.grupo].n++; porGrupo[m.grupo].mm += m.mm; porGrupo[m.grupo].cassetes.push(m.n);
+        });
+        L.push('. Comprometida (R1)');
+        Object.entries(porGrupo).forEach(([g, v]) => {
+            L.push(`  - ${g}: ${v.n} foco(s) [cassetes ${faixaResumida(v.cassetes.sort((a, b) => a - b))}]${v.mm > 0 ? ` · ${fmt(v.mm)} mm` : ''}`);
+        });
+        if (r.totalMm > 0) {
+            L.push(`. Extensão linear total: ${fmt(r.totalMm)} mm · maior foco: ${fmt(r.maiorMm)} mm (${r.maiorMm <= 3 ? 'focal' : 'extensa'})`);
+        }
+        if (r.gradMargem.length) L.push(`. Padrão de Gleason na margem: ${r.gradMargem.join(' e ')}`);
+    } else {
+        L.push('. Livres de neoplasia (R0)');
+    }
+    L.push('');
+
+    L.push('EXTENSÃO E INVASÕES');
+    L.push(r.epeGrupos.length
+        ? `. Extensão extraprostática: presente em ${listaTexto(r.epeGrupos.map(s => s.g.nome.toLowerCase()))} [cassetes ${faixaResumida(r.epeGrupos.flatMap(s => s.epes).sort((a, b) => a - b))}]`
+        : '. Extensão extraprostática: não detectada');
+    if (r.vesGrupos.length) {
+        L.push(`. Vesículas seminais: comprometida(s) — ${listaTexto(r.vesGrupos.map(s => s.g.nome.toLowerCase()))}`);
+    } else {
+        L.push(`. Vesículas seminais: ${r.vesSel}`);
+    }
+    L.push(`. Colo vesical: ${document.getElementById('colo').value}`);
+    L.push(`. Invasão vascular sanguínea: ${document.getElementById('vascS').value}`);
+    L.push(`. Invasão vascular linfática: ${document.getElementById('vascL').value}`);
+    L.push(`. Invasão perineural: ${document.getElementById('peri').value}`);
+    if (document.getElementById('chkT4').checked) L.push('. Invasão de estruturas adjacentes: presente');
+    if (r.lnGrupos.length) L.push(`. Linfonodos com metástase nos cassetes de: ${listaTexto(r.lnGrupos.map(s => s.g.nome.toLowerCase()))}`);
+    if (r.lnTot > 0 || r.lnPos > 0) L.push(`. Linfonodos: ${r.lnPos} positivo(s) de ${r.lnTot} examinado(s)`);
+    L.push('');
+
+    const adj = [];
+    if (document.getElementById('chkPin').checked) adj.push('Neoplasia intraepitelial prostática (PIN) de alto grau');
+    if (document.getElementById('chkHnp').checked) adj.push('Hiperplasia nodular');
+    if (document.getElementById('chkInf').checked) adj.push('Processo inflamatório crônico');
+    if (document.getElementById('chkAtr').checked) adj.push('Atrofia acinar');
+    if (adj.length) {
+        L.push('TECIDO PROSTÁTICO ADJACENTE');
+        adj.forEach(a => L.push(`. ${a}`));
+        L.push('');
+    }
+
+    L.push('ESTADIAMENTO (sugestão — conferir critérios)');
+    L.push(`. ${r.pT} ${r.pN}${r.margens.length ? ' · margens comprometidas (R1)' : ' · margens livres (R0)'}`);
+
+    document.getElementById('resumoTxt').value = L.join('\n');
+}
+
+function copiarResumo() {
+    const txt = document.getElementById('resumoTxt').value;
+    if (!txt) return;
+    navigator.clipboard.writeText(txt).then(() => {
+        const b = document.getElementById('btnCopiar');
+        b.textContent = '✓ Copiado!';
+        b.classList.replace('bg-blue-600', 'bg-green-600');
+        b.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+        setTimeout(() => {
+            b.textContent = 'Copiar resumo';
+            b.classList.replace('bg-green-600', 'bg-blue-600');
+            b.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+        }, 2000);
+    });
+}
+
+// =================================================================
+// EXTRAS (coluna direita) — persistência
+// =================================================================
+const CAMPOS_EXTRA = ['cribriforme','pesoProstata','intraductal','vascS','vascL','peri','colo','vesicula','lnPos','lnTot'];
+const CHECKS_EXTRA = ['chkT4','chkPin','chkHnp','chkInf','chkAtr'];
+
+function onExtra() {
+    estado.extras = {};
+    CAMPOS_EXTRA.forEach(id => estado.extras[id] = document.getElementById(id).value);
+    CHECKS_EXTRA.forEach(id => estado.extras[id] = document.getElementById(id).checked);
+    salvar();
+    calcular();
+}
+function aplicarExtras() {
+    CAMPOS_EXTRA.forEach(id => { if (estado.extras[id] !== undefined) document.getElementById(id).value = estado.extras[id]; });
+    CHECKS_EXTRA.forEach(id => { if (estado.extras[id] !== undefined) document.getElementById(id).checked = estado.extras[id]; });
+}
+
+// =================================================================
+// RENDER GERAL
+// =================================================================
+function renderTudo(comGrupos = true) {
+    MAPA = construirMapa();
+    if (comGrupos) renderGrupos();
+    renderRegua();
+    renderAvisos();
+    renderTabela();
+    document.getElementById('legendaModo').textContent = estado.modo === 'tumor'
+        ? 'Tumor % = quanto do cassete é tumor · G4/G5 % = quanto DO TUMOR daquele cassete é padrão 4 / 5 · Enter avança'
+        : 'Tumor % = quanto do cassete é tumor · G4/G5 % = quanto DA ÁREA do cassete é padrão 4 / 5 (convertido automaticamente) · Enter avança';
+    calcular();
+    salvar();
+}
+
+// =================================================================
+// INICIALIZAÇÃO
+// =================================================================
+restaurar();
+document.getElementById('inTotal').value = estado.total;
+document.getElementById('inModo').value = estado.modo;
+document.getElementById('chkAvancado').checked = !!estado.avancado;
+document.getElementById('tblDados').classList.toggle('hide-adv', !estado.avancado);
+document.getElementById('painelMapa').style.display = estado.mapaAberto === false ? 'none' : '';
+document.getElementById('btnToggleMapa').textContent = estado.mapaAberto === false ? 'Expandir' : 'Recolher';
+renderModelos();
+aplicarExtras();
+renderTudo();
+</script>
+</body>
+</html>
