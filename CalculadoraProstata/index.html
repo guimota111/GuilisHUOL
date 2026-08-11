@@ -48,10 +48,16 @@
                     <!-- linha de controles -->
                     <div class="flex flex-wrap items-end gap-3">
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">Total de cassetes</label>
-                            <input type="number" min="1" max="200" step="1" id="inTotal" value="34"
-                                onchange="setTotal(this.value)"
-                                class="w-24 border rounded p-1 text-center focus:ring-1 focus:ring-blue-400">
+                            <label class="block text-xs text-gray-500 mb-1">Total de cassetes <span class="text-gray-300">(1 a 200)</span></label>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="ajustarTotal(-1)"
+                                    class="w-7 h-7 border rounded text-gray-500 hover:bg-gray-100 leading-none">−</button>
+                                <input type="number" min="1" max="200" step="1" id="inTotal" value="34"
+                                    oninput="setTotal(this.value)" onchange="setTotal(this.value, true)"
+                                    class="w-20 border rounded p-1 text-center focus:ring-1 focus:ring-blue-400">
+                                <button type="button" onclick="ajustarTotal(1)"
+                                    class="w-7 h-7 border rounded text-gray-500 hover:bg-gray-100 leading-none">+</button>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">G4% / G5% informados como</label>
@@ -671,23 +677,55 @@ function renderAvisos() {
     if (MAPA.conflitos.length)
         avisos.push(['red', `Cassetes em mais de uma topografia (${faixaResumida(MAPA.conflitos)}) — foram atribuídos à primeira topografia da lista.`]);
     if (MAPA.naoMapeados.length)
-        avisos.push(['amber', `Cassetes sem topografia (${faixaResumida(MAPA.naoMapeados)}) — entram no cálculo do volume como tecido prostático, mas sem localização.`]);
+        avisos.push(['amber', `Cassetes sem topografia (${faixaResumida(MAPA.naoMapeados)}) — entram no cálculo do volume como tecido prostático, mas sem localização.`,
+            `<button type="button" onclick="criarGrupoNaoMapeados()" class="ml-2 underline font-semibold hover:no-underline">criar topografia com eles</button>`]);
     if (MAPA.invalidos.length)
         avisos.push(['amber', `Faixa inválida ou fora do total em: ${MAPA.invalidos.join(', ')}.`]);
     const semProstata = MAPA.visiveis.filter(g => g.tipo === 'prostata').reduce((a, g) => a + g.cassetes.length, 0);
     if (!semProstata)
         avisos.push(['red', 'Nenhum cassete marcado como “Próstata” — o volume tumoral não pode ser calculado.']);
 
-    box.innerHTML = avisos.map(([c, t]) =>
-        `<div class="text-xs rounded px-2 py-1 border ${c === 'red' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-800'}">${esc(t)}</div>`
+    box.innerHTML = avisos.map(([c, t, botao]) =>
+        `<div class="text-xs rounded px-2 py-1 border ${c === 'red' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-800'}">${esc(t)}${botao || ''}</div>`
     ).join('');
 }
 
-function setTotal(v) {
-    const n = Math.max(1, Math.min(200, parseInt(v, 10) || 1));
+/**
+ * Aplica o total já durante a digitação (oninput). Enquanto o campo está
+ * incompleto ("" ou "0") nada é reescrito, senão o navegador atropelaria o
+ * que a pessoa está digitando; ao sair do campo (onchange) o valor é
+ * normalizado com `forcar`.
+ */
+function setTotal(v, forcar = false) {
+    const el = document.getElementById('inTotal');
+    const bruto = String(v ?? '').trim();
+    let n = parseInt(bruto, 10);
+
+    if (bruto === '' || isNaN(n)) {
+        if (forcar) el.value = estado.total;
+        return;
+    }
+    if (n > 200) { n = 200; el.value = n; }
+    if (n < 1) {
+        if (!forcar) return;
+        n = 1; el.value = n;
+    }
+    if (forcar) el.value = n;
+    if (n === estado.total) return;
+
     estado.total = n;
-    document.getElementById('inTotal').value = n;
     renderTudo();
+}
+
+function ajustarTotal(d) {
+    setTotal(estado.total + d, true);
+}
+
+function criarGrupoNaoMapeados() {
+    if (!MAPA.naoMapeados.length) return;
+    estado.grupos.push({ nome: '', faixa: faixaResumida(MAPA.naoMapeados), tipo: 'prostata', lado: '' });
+    renderTudo();
+    document.querySelectorAll('#tabelaGrupos input[type=text]')[(estado.grupos.length - 1) * 2]?.focus();
 }
 function setModo(v) { estado.modo = v; renderTudo(); }
 function setGrupo(i, campo, valor) {
